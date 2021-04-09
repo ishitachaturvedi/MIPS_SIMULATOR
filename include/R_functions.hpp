@@ -2,9 +2,10 @@
 #define R_TYPE
 #include "mips.hpp"
 #include "error.hpp"
+#include "Decode.hpp"
 
 
-void r_type(State& mips_state, bool& executed);
+void r_type(State& mips_state, bool& executed, Decode& decode);
 
 void add(State& mips_state, uint32_t rt, uint32_t rs, uint32_t rd);
 void addu(State& mips_state, uint32_t rt, uint32_t rs, uint32_t rd);

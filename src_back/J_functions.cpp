@@ -2,20 +2,20 @@
 using namespace std;
 
 
-void j_type(State& mips_state, bool& executed, Decode& decode){
+void j_type(State& mips_state, bool& executed){
 	if(!executed){
-		// int32_t instr = mips_state.ram[mips_state.pc];
-		// int32_t address = instr & 0x03FFFFFF;
-		// int32_t opcode = (instr & 0xFC000000) >> 26;
+		int32_t instr = mips_state.ram[mips_state.pc];
+		int32_t address = instr & 0x03FFFFFF;
+		int32_t opcode = (instr & 0xFC000000) >> 26;
 
 	
-		switch(decode.opcode) {
+		switch(opcode) {
 			case 0x00000002:
-				j(mips_state, decode.address);
+				j(mips_state, address);
 				executed = true;
 				return;
 			case 0x00000003:
-				jal(mips_state, decode.address);
+				jal(mips_state, address);
 				executed = true;
 				return;
 			default:

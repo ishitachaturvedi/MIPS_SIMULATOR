@@ -7,5 +7,7 @@
 #include "J_functions.hpp"
 #include "I_functions.hpp"
 #include "error.hpp"
+#include "Decode.hpp"
+#include "dumpPipeline.hpp"
 
 #endif

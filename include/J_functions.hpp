@@ -2,8 +2,9 @@
 #define J_TYPE
 
 #include "mips.hpp"
+#include "Decode.hpp"
 
-void j_type(State& mips_state, bool& executed);
+void j_type(State& mips_state, bool& executed, Decode& decode);
 
 
 void j(State& mips_state, uint32_t address);
