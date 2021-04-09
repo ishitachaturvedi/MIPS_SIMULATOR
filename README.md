@@ -212,7 +212,7 @@ it does not need to be binary built from C++, and could be a bash script._
 
 An example of running the Testbench on it's own Simulator would be:
 ```
-bin/mips_testbench  bin/mips_simulator
+bin/testbench  bin/mips_simulator
 ```
 corresponding output might be:
 ```
@@ -224,7 +224,7 @@ corresponding output might be:
 If we assume a different Testbench, and have a Simulator at the
 path `../other-simulator/bin/mips_simulator`, then we could execute with:
 ```
-bin/mips_testbench   ../other-simulator/bin/mips_simulator
+bin/testbench   ../other-simulator/bin/mips_simulator
 ```
 and the corresponding output might be:
 ```
