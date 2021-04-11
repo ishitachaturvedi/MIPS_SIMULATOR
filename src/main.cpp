@@ -73,6 +73,7 @@ int main(int argc, char* argv[]){
 				j_type(mips_state,executed,decode);
 				moveOneCycle(mips_state, pipeState, pipeState_Next, executed, CurCycle);
 				decode_ex = decode;
+				mips_state.pc = tempNPC;	//Set the value of pc (the address of the next instruction that is going to execute) to the
 			}
 
 			dumpPipeState(pipeState);
@@ -86,7 +87,7 @@ int main(int argc, char* argv[]){
 				throw (static_cast<int>(Exception::INSTRUCTION));
 			}		
 			
-			mips_state.pc = tempNPC;	//Set the value of pc (the address of the next instruction that is going to execute) to the
+			//mips_state.pc = tempNPC;	//Set the value of pc (the address of the next instruction that is going to execute) to the
 							//original value of npc
 
 		};
@@ -94,7 +95,6 @@ int main(int argc, char* argv[]){
     }
 
 	catch (const int EXIT_CODE){		//Exceptions and Errors are caught here
-		cout<<"I AM EXITING\n";
 		switch(EXIT_CODE){
 			case 0xFFFFFFF6:
 				std::exit(static_cast<int>(Exception::ARITHMETIC));

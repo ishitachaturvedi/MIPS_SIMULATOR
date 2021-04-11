@@ -139,7 +139,6 @@ void add(State& mips_state, uint32_t rs, uint32_t rt, uint32_t rd){
 	int32_t temp2 = mips_state.reg[rt];
 	int32_t result = temp1 + temp2;
 	 	if (((temp1 < 0 ) && (temp2 < 0) && (result >= 0)) || ((temp1 > 0) && (temp2 > 0) && (result <= 0))){
-			cout <<"R1 THROW\n";
 			throw (static_cast<int>(Exception::ARITHMETIC));
 		}
 		else {
@@ -157,7 +156,6 @@ void And(State& mips_state, uint32_t rs, uint32_t rt, uint32_t rd){
 
 void jr(State& mips_state, uint32_t rs){
 	if(mips_state.reg[rs] % 4 != 0){
-		cout <<"R2 THROW\n";
 		throw (static_cast<int>(Exception::MEMORY));
 	}
 	else{
@@ -214,7 +212,6 @@ void sub(State& mips_state, uint32_t rs, uint32_t rt, uint32_t rd){
 	int32_t temp2 = mips_state.reg[rt];
 	int32_t result = temp1 - temp2;
 		if (((temp1 < 0 ) && (temp2 > 0) && (result >= 0)) || ((temp1 > 0) && (temp2 < 0) && (result <= 0))){
-			cout <<"R3 THROW\n";
 			throw (static_cast<int>(Exception::ARITHMETIC));
 		}
 		else {
