@@ -11,6 +11,7 @@ void r_type(State& mips_state, bool& executed){
 	uint32_t rt = (instr & 0x001F0000) >> 16; 
 	uint32_t rs = (instr & 0x03E00000) >> 21; 
 	
+	cout<<"R EXEC\n";
 
 	if(!executed && opcode == 0x00000000){
 		switch(funct_field){

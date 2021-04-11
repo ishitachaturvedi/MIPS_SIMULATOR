@@ -19,6 +19,5 @@ struct Decode
 };
 
 void decode_inst(uint32_t instr, Decode& decode);
-void checkForStall(Decode &decode, Decode &decode_ex, bool is_load, int &stalling);
 
 #endif /* DECODE */

@@ -74,6 +74,67 @@ enum FUN_IDS
     FUN_XOR = 0x26
 };
 
+//move pipeline one cycle forward
+void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle)
+{
+    pipeState.cycle = CurCycle;
+			pipeState.ifInstr = mips_state.ram[mips_state.pc];
+			pipeState.idInstr = pipeState_Next.idInstr;
+			pipeState.exInstr = pipeState_Next.exInstr;
+			pipeState.memInstr = pipeState_Next.memInstr;
+			pipeState.wbInstr = pipeState_Next.wbInstr;
+
+			pipeState_Next.wbInstr = pipeState_Next.memInstr;
+			pipeState_Next.memInstr = pipeState_Next.exInstr;
+			pipeState_Next.exInstr = pipeState_Next.idInstr;
+			pipeState_Next.idInstr = pipeState.ifInstr;
+
+			//PC setting
+			pipeState.ifPC = mips_state.pc;
+			pipeState.idPC = pipeState_Next.idPC;
+			pipeState.exPC = pipeState_Next.exPC;
+			pipeState.memPC = pipeState_Next.memPC;
+			pipeState.wbPC = pipeState_Next.wbPC;
+			
+			pipeState_Next.wbPC = pipeState_Next.memPC;
+			pipeState_Next.memPC = pipeState_Next.exPC;
+			pipeState_Next.exPC = pipeState_Next.idPC;
+			pipeState_Next.idPC = pipeState.ifPC;
+
+			//reg setting
+			pipeState.ifreg = mips_state.reg;
+			pipeState.idreg = pipeState_Next.idreg;
+			pipeState.exreg = pipeState_Next.exreg;
+			pipeState.memreg = pipeState_Next.memreg;
+			pipeState.wbreg = pipeState_Next.wbreg;
+			
+			pipeState_Next.wbreg = pipeState_Next.memreg;
+			pipeState_Next.memreg = pipeState_Next.exreg;
+			pipeState_Next.exreg = pipeState_Next.idreg;
+			pipeState_Next.idreg = pipeState.ifreg;
+
+			//execute setting
+			pipeState.ex = executed;
+			pipeState.mem = pipeState_Next.mem;
+			pipeState.wb = pipeState_Next.wb;
+
+			pipeState_Next.mem = pipeState.ex;
+			pipeState_Next.wb = pipeState_Next.mem;
+}
+
+void initPipeline(PipeState_Next &pipeState_Next)
+{
+    pipeState_Next.idInstr = 0x0;
+    pipeState_Next.exInstr = 0x0;
+    pipeState_Next.memInstr = 0x0;
+    pipeState_Next.wbInstr = 0x0;
+    pipeState_Next.idPC = 0x1;
+    pipeState_Next.exPC = 0x1;
+    pipeState_Next.memPC = 0x1;
+    pipeState_Next.wbPC = 0x1;
+    pipeState_Next.wb = 1;
+}
+
 //Byte's the smallest thing that can hold the opcode...
 static uint8_t getOpcode(uint32_t instr)
 {
@@ -420,6 +481,7 @@ static void printInstr(uint32_t curInst, ostream & pipeState)
 
 void dumpPipeState(PipeState & state)
 {
+
     ofstream pipe_out("pipe_state.out", ios::app);
 
     if(pipe_out)

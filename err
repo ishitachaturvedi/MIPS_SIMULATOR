@@ -1,0 +1,8 @@
+src/main.cpp: In function ‘int main(int, char**)’:
+src/main.cpp:99:4: error: ‘execute’ was not declared in this scope
+    execute setting
+    ^
+src/main.cpp:99:12: error: expected ‘;’ before ‘setting’
+    execute setting
+            ^
+make: *** [bin/mips_simulator] Error 1

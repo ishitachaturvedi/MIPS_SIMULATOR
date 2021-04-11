@@ -1,4 +1,5 @@
 #include "J_functions.hpp"
+#include <iostream>
 using namespace std;
 
 
@@ -7,7 +8,6 @@ void j_type(State& mips_state, bool& executed, Decode& decode){
 		// int32_t instr = mips_state.ram[mips_state.pc];
 		// int32_t address = instr & 0x03FFFFFF;
 		// int32_t opcode = (instr & 0xFC000000) >> 26;
-
 	
 		switch(decode.opcode) {
 			case 0x00000002:

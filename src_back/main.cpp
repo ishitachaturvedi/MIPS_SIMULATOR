@@ -26,6 +26,8 @@ int main(int argc, char* argv[]){
 
 	for(;;){
 
+		cout << "I AM IN\n";
+
 		checkExec(mips_state.reg, mips_state.pc); //checks if the address is in the executable range
 		mips_state.reg[0] = 0;		//register $0 must retain the value zero in every new clock cycle of the processor
 		executed = false;		//every new clock cycle the flag is turned off since no instruction has yet been executed

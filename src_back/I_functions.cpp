@@ -21,6 +21,7 @@ void i_type(State& mips_state, bool& executed){
 			SignExtImm = immediate;
 		}
 
+		cout<<"I EXEC\n";
  
 		switch(opcode){
 			case 0x00000008:

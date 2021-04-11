@@ -1,7 +1,8 @@
 #include "I_functions.hpp"
+#include <iostream>
 using namespace std;
 
-void i_type(State& mips_state, bool& executed, Decode& decode){
+void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load){
 	if(!executed){
 		// uint32_t instr = mips_state.ram[mips_state.pc];
 
@@ -20,7 +21,6 @@ void i_type(State& mips_state, bool& executed, Decode& decode){
 		// else{
 		// 	SignExtImm = immediate;
 		// }
-
  
 		switch(decode.opcode){
 			case 0x00000008:
@@ -46,34 +46,42 @@ void i_type(State& mips_state, bool& executed, Decode& decode){
 			case 0x00000024:
 				lbu(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
+				is_load = true;
 				return;
 			case 0x00000020:
 				lb(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
+				is_load = true;
 				return;
 			case 0x00000025:
 				lhu(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
+				is_load = true;
 				return;
 			case 0x00000021:
 				lh(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
+				is_load = true;
 				return;
 			case 0x0000000F:
 				lui(mips_state, decode.rs, decode.rt, decode.immediate);
 				executed = true;
+				is_load = true;
 				return;
 			case 0x00000023:
 				lw(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
+				is_load = true;
 				return;
 			case 0x00000022:
 				lwl(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
+				is_load = true;
 				return;
 			case 0x00000026:
 				lwr(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
+				is_load = true;
 				return;
 			case 0x00000028:
 				sb(mips_state, decode.rs, decode.rt, decode.SignExtImm);
@@ -126,6 +134,7 @@ void i_type(State& mips_state, bool& executed, Decode& decode){
 void addi(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		int32_t temp = mips_state.reg[rs];
 		if (((temp < 0) && (SignExtImm < 0) && (temp + SignExtImm >= 0)) || ((temp > 0) && (SignExtImm > 0) && (temp + SignExtImm <= 0))){
+			cout <<"I1 THROW\n";
 			throw (static_cast<int>(Exception::ARITHMETIC));
 		}
 		else {
@@ -172,6 +181,7 @@ void lbu(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 
 		if((addr / 4) == ADDR_GETC){
 			if((addr % 4) != 3){
+				cout <<"I2 THROW\n";
 				throw (static_cast<int>(Exception::MEMORY));
 			}
 			else{
@@ -209,6 +219,7 @@ void lb(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 
 		if((addr / 4) == ADDR_GETC){
 			if((addr % 4) != 3){
+				cout <<"I3 THROW\n";
 				throw (static_cast<int>(Exception::MEMORY));
 			}
 			else{
@@ -250,6 +261,7 @@ void lhu(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 
 		if((addr / 4) == ADDR_GETC){
 			if((addr % 4) != 2){
+				cout <<"I4 THROW\n";
 				throw (static_cast<int>(Exception::MEMORY));
 			}
 			else{
@@ -266,6 +278,7 @@ void lhu(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		}
 
 		if(addr % 2 != 0){
+			cout <<"I5 THROW\n";
 			throw (static_cast<int>(Exception::MEMORY));
 		}
 		else{
@@ -286,6 +299,7 @@ void lh(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 
 		if((addr / 4) == ADDR_GETC){
 			if((addr % 4) != 2){
+				cout <<"I6 THROW\n";
 				throw (static_cast<int>(Exception::MEMORY));
 			}
 			else{
@@ -302,6 +316,7 @@ void lh(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		}
 
 		if(addr % 2 != 0){
+			cout <<"I7 THROW\n";
 			throw (static_cast<int>(Exception::MEMORY));
 		}
 		else{
@@ -324,6 +339,7 @@ void lh(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 
 void lui(State& mips_state, uint32_t rs, uint32_t rt, int32_t immediate){
 		if(rs != 0x00000000){
+			cout <<"I8 THROW\n";
 			throw (static_cast<int>(Exception::INSTRUCTION));
 		}
 		else{
@@ -339,6 +355,7 @@ void lw(State& mips_state , uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		checkRead(addr / 4);
 
 		if(addr % 4 != 0){
+			cout <<"I9 THROW\n";
 			throw (static_cast<int>(Exception::MEMORY));
 		}
 		else {
@@ -451,6 +468,7 @@ void sb(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 
 		if((addr / 4) == ADDR_PUTC){
 			if((addr % 4) != 3){
+				cout <<"I8 THROW\n";
 				throw (static_cast<int>(Exception::MEMORY));
 			}
 			else{
@@ -483,6 +501,7 @@ void sh(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 
 		if((addr / 4) == ADDR_PUTC){
 			if((addr % 4) != 2){
+				cout <<"I9 THROW\n";
 				throw (static_cast<int>(Exception::MEMORY));
 			}
 			else{
@@ -492,6 +511,7 @@ void sh(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		}
 
 		if(addr % 2){
+			cout <<"I10 THROW\n";
 			throw (static_cast<int>(Exception::MEMORY));
 		}
 
@@ -513,6 +533,7 @@ void sw(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		checkWrite(static_cast<uint32_t>(addr / 4));
 
 		if(addr % 4 != 0){
+			cout <<"I11 THROW\n";
 			throw (static_cast<int>(Exception::MEMORY));
 		}
 		else{
@@ -548,6 +569,7 @@ void bgezal(State& mips_state, uint32_t rs, int32_t SignExtImm){
 
 void bgtz(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		if(rt != 0x00000000){
+			cout <<"I12 THROW\n";
 			throw (static_cast<int>(Exception::INSTRUCTION));
 		}
 		else{
@@ -563,6 +585,7 @@ void bgtz(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 void blez(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		int32_t temp = mips_state.reg[rs];
 		if(rt != 0){
+			cout <<"I13 THROW\n";
 			throw (static_cast<int>(Exception::INSTRUCTION));
 		}
 

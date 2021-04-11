@@ -1,4 +1,5 @@
 #include "R_functions.hpp"
+#include <iostream>
 using namespace std;
 
 void r_type(State& mips_state, bool& executed, Decode& decode){
@@ -9,8 +10,7 @@ void r_type(State& mips_state, bool& executed, Decode& decode){
 	// uint32_t shamt_field = (instr & 0x000007C0) >> 6;
 	// uint32_t rd ;
 	// uint32_t rt = (instr & 0x001F0000) >> 16; 
-	// uint32_t rs = (instr & 0x03E00000) >> 21; 
-	
+	// uint32_t rs = (instr & 0x03E00000) >> 21; 	
 
 	if(!executed && decode.opcode_R == 0x00000000){
 		switch(decode.funct_field){
@@ -139,6 +139,7 @@ void add(State& mips_state, uint32_t rs, uint32_t rt, uint32_t rd){
 	int32_t temp2 = mips_state.reg[rt];
 	int32_t result = temp1 + temp2;
 	 	if (((temp1 < 0 ) && (temp2 < 0) && (result >= 0)) || ((temp1 > 0) && (temp2 > 0) && (result <= 0))){
+			cout <<"R1 THROW\n";
 			throw (static_cast<int>(Exception::ARITHMETIC));
 		}
 		else {
@@ -156,6 +157,7 @@ void And(State& mips_state, uint32_t rs, uint32_t rt, uint32_t rd){
 
 void jr(State& mips_state, uint32_t rs){
 	if(mips_state.reg[rs] % 4 != 0){
+		cout <<"R2 THROW\n";
 		throw (static_cast<int>(Exception::MEMORY));
 	}
 	else{
@@ -212,6 +214,7 @@ void sub(State& mips_state, uint32_t rs, uint32_t rt, uint32_t rd){
 	int32_t temp2 = mips_state.reg[rt];
 	int32_t result = temp1 - temp2;
 		if (((temp1 < 0 ) && (temp2 > 0) && (result >= 0)) || ((temp1 > 0) && (temp2 < 0) && (result <= 0))){
+			cout <<"R3 THROW\n";
 			throw (static_cast<int>(Exception::ARITHMETIC));
 		}
 		else {
