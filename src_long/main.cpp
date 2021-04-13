@@ -75,7 +75,7 @@ int main(int argc, char* argv[]){
 
 			ex_isload = pipeState.ex_isload;
 			
-			//dumpPipeState(pipeState);
+			dumpPipeState(pipeState);
 
 			checkForStall(pipeState, ex_isload, stalling);
 
