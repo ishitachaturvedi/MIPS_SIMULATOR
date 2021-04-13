@@ -57,15 +57,14 @@ simulator : bin/mips_simulator
 ###################################################
 ## 5 stage bypass Simulator
 
-IDIR = include_byp
+BYP_IDIR = include_byp
 BYP_SIM_DEP = src_byp/main.cpp src_byp/setUp.cpp src_byp/R_functions.cpp src_byp/error.cpp src_byp/J_functions.cpp src_byp/I_functions.cpp src_byp/Decode.cpp src_byp/dumpPipeline.cpp
-G++_FLAGS = -Wall -std=c++11 -O1 -I $(IDIR)
+BYP_G++_FLAGS = -Wall -std=c++11 -O1 -I include_byp
 
 # Build the simulation binary
 bin/mips_simulator_byp : $(BYP_SIM_DEP)
 	mkdir -p bin
-	g++ $(G++_FLAGS) $(BYP_SIM_DEP) -o bin/mips_simulator_byp
-
+	g++ $(BYP_G++_FLAGS) $(BYP_SIM_DEP) -o bin/mips_simulator_byp
 
 # In order to comply with spec
 simulator_byp : bin/mips_simulator_byp
@@ -73,14 +72,14 @@ simulator_byp : bin/mips_simulator_byp
 ###################################################
 ## 7 stage bypass Simulator with MulDiv unit
 
-IDIR = include
+LONG_IDIR = include_long
 LONG_SIM_DEP = src_long/main.cpp src_long/setUp.cpp src_long/R_functions.cpp src_long/error.cpp src_long/J_functions.cpp src_long/I_functions.cpp src_long/Decode.cpp src_long/dumpPipeline.cpp
-G++_FLAGS = -Wall -std=c++11 -O1 -I $(IDIR)
+LONG_G++_FLAGS = -Wall -std=c++11 -O1 -I $(LONG_IDIR)
 
 # Build the simulation binary
 bin/mips_simulator_long : $(LONG_SIM_DEP)
 	mkdir -p bin
-	g++ $(G++_FLAGS) $(LONG_SIM_DEP) -o bin/mips_simulator_long
+	g++ $(LONG_G++_FLAGS) $(LONG_SIM_DEP) -o bin/mips_simulator_long
 
 
 # In order to comply with spec

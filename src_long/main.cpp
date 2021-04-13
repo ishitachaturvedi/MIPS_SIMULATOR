@@ -9,6 +9,8 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
+	int CurCycle = 0;
+
    try{						//Exception and Error handling
 
 		if(argc != 2){
@@ -29,14 +31,13 @@ int main(int argc, char* argv[]){
 		PipeState_Next pipeState_Next;
 		Decode decode;
 
-		int CurCycle = 0;
 		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage
 
 
 		mips_state.ram.resize(MEM_SIZE);	//This will allocate memory for the whole RAM
 
 		bool is_load = false;
-		bool ex_isload = false;
+		bool is_mulDiv = false;
 
 		setUp(mips_state, fileName);		//Passes the instructions to the vector
 
@@ -52,43 +53,32 @@ int main(int argc, char* argv[]){
 			//Send Instruction for Decode
 			decode_inst(instr,decode);
 
-			if(stalling !=2)
+			// Execute if not stalling
+			if(stalling != 1)
 			{
 				tempNPC = mips_state.npc;
-			}
-
-			// Execute if not stalling
-			if(stalling != 2)
-			{
 				//Execute Instructions
-				r_type(mips_state,executed,decode);
+				r_type(mips_state,executed,decode,is_mulDiv);
 				i_type(mips_state,executed,decode,is_load);
 				j_type(mips_state,executed,decode);
 			}
 
-			if(stalling == 3)
+			moveOneCycle(mips_state, pipeState, pipeState_Next, executed, CurCycle, stalling, is_load, is_mulDiv);
+
+			if(stalling == 1)
 			{
 				stalling = 0;
 			}
 
-			moveOneCycle(mips_state, pipeState, pipeState_Next, executed, CurCycle, stalling, is_load);
-
-			ex_isload = pipeState.ex_isload;
-			
 			dumpPipeState(pipeState);
 
-			checkForStall(pipeState, ex_isload, stalling);
+			checkForStall(pipeState, stalling);
 
 			CurCycle = CurCycle + 1;
 
 			if(stalling !=1)
 			{
 				mips_state.pc = tempNPC;
-			}
-
-			if(stalling != 0)
-			{
-				stalling = stalling + 1;
 			}
 
 			checkExit(pipeState.wbreg, pipeState.wbPC);
@@ -101,7 +91,7 @@ int main(int argc, char* argv[]){
 		};
 
     }
-
+//
 	catch (const int EXIT_CODE){		//Exceptions and Errors are caught here
 		switch(EXIT_CODE){
 			case 0xFFFFFFF6:

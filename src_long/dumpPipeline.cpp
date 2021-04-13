@@ -75,97 +75,193 @@ enum FUN_IDS
 };
 
 
-void checkForStall(PipeState &pipeState, bool is_load, int &stalling)
+void checkForStall(PipeState &pipeState, int &stalling)
 {
     Decode id;
-    Decode ex;
+    Decode ex1;
+    Decode ex2;
+    Decode ex3;
+    Decode ex4;
+    Decode mem;
     decode_inst(pipeState.idInstr, id);
-    decode_inst(pipeState.exInstr, ex);
+    decode_inst(pipeState.ex1Instr, ex1);
+    decode_inst(pipeState.ex2Instr, ex2);
+    decode_inst(pipeState.ex3Instr, ex3);
+    decode_inst(pipeState.ex4Instr, ex4);
+    decode_inst(pipeState.memInstr, mem);
 
-    if((id.rs == ex.rt || id.rd == ex.rt) && ex.rt != 0x0 && is_load && stalling == 0)
+    // if ex1, ex2, ex3 or ex4 are load inst which is being waited on, we stall
+    if(
+        (((id.rs == ex1.rt || id.rd == ex1.rt) && ex1.rt != 0x0 && pipeState.ex1_isload && !(pipeState.ex1Instr == pipeState.memInstr))
+        || ((id.rs == ex2.rt || id.rd == ex2.rt) && ex2.rt != 0x0 && pipeState.ex2_isload && !(pipeState.ex2Instr == pipeState.memInstr))
+        || ((id.rs == ex3.rt || id.rd == ex3.rt) && ex3.rt != 0x0 && pipeState.ex3_isload && !(pipeState.ex3Instr == pipeState.memInstr))
+        || ((id.rs == ex4.rt || id.rd == ex4.rt) && ex4.rt != 0x0 && pipeState.ex4_isload && !(pipeState.ex4Instr == pipeState.memInstr))) 
+    )
+    {
+        stalling = 1;
+    }
+
+    // if ex1, ex2, ex3 are mulDiv inst which is being waited on, we stall
+    if(
+        (((id.rs == ex1.rd || id.rt == ex1.rd) && ex1.rd != 0x0 && pipeState.ex1_isMulDiv && !(pipeState.ex1Instr == pipeState.ex4Instr))
+        || ((id.rs == ex2.rd || id.rt == ex2.rd) && ex2.rd != 0x0 && pipeState.ex2_isMulDiv && !(pipeState.ex2Instr == pipeState.ex4Instr))
+        || ((id.rs == ex3.rd || id.rt == ex3.rd) && ex3.rd != 0x0 && pipeState.ex3_isMulDiv && !(pipeState.ex3Instr == pipeState.ex4Instr)))
+    )
     {
         stalling = 1;
     }
 }
 
 //move pipeline one cycle forward
-void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, int stalling, bool is_load)
+void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, int stalling, bool is_load, bool is_mulDiv)
 {
-    if(stalling != 2)
+    std::flush(std::cout);
+    if(stalling != 1)
     {    
+        // Instruction shifting
         pipeState.cycle = CurCycle;
         pipeState.ifInstr = mips_state.ram[mips_state.pc];
         pipeState.idInstr = pipeState_Next.idInstr;
-        pipeState.exInstr = pipeState_Next.exInstr;
+        pipeState.ex1Instr = pipeState_Next.ex1Instr;
+        pipeState.ex2Instr = pipeState_Next.ex2Instr;
+        pipeState.ex3Instr = pipeState_Next.ex3Instr;
+        pipeState.ex4Instr = pipeState_Next.ex4Instr;
         pipeState.memInstr = pipeState_Next.memInstr;
         pipeState.wbInstr = pipeState_Next.wbInstr;
 
         pipeState_Next.wbInstr = pipeState_Next.memInstr;
-        pipeState_Next.memInstr = pipeState_Next.exInstr;
-        pipeState_Next.exInstr = pipeState_Next.idInstr;
+        pipeState_Next.memInstr = pipeState_Next.ex4Instr;
+        pipeState_Next.ex4Instr = pipeState_Next.ex3Instr;
+        pipeState_Next.ex3Instr = pipeState_Next.ex2Instr;
+        pipeState_Next.ex2Instr = pipeState_Next.ex1Instr;
+        pipeState_Next.ex1Instr = pipeState_Next.idInstr;
         pipeState_Next.idInstr = pipeState.ifInstr;
 
         //PC setting
         pipeState.ifPC = mips_state.pc;
         pipeState.idPC = pipeState_Next.idPC;
-        pipeState.exPC = pipeState_Next.exPC;
+        pipeState.ex1PC = pipeState_Next.ex1PC;
+        pipeState.ex2PC = pipeState_Next.ex2PC;
+        pipeState.ex3PC = pipeState_Next.ex3PC;
+        pipeState.ex4PC = pipeState_Next.ex4PC;
         pipeState.memPC = pipeState_Next.memPC;
         pipeState.wbPC = pipeState_Next.wbPC;
         
         pipeState_Next.wbPC = pipeState_Next.memPC;
-        pipeState_Next.memPC = pipeState_Next.exPC;
-        pipeState_Next.exPC = pipeState_Next.idPC;
+        pipeState_Next.memPC = pipeState_Next.ex4PC;
+        pipeState_Next.ex4PC = pipeState_Next.ex3PC;
+        pipeState_Next.ex3PC = pipeState_Next.ex2PC;
+        pipeState_Next.ex2PC = pipeState_Next.ex1PC;
+        pipeState_Next.ex1PC = pipeState_Next.idPC;
         pipeState_Next.idPC = pipeState.ifPC;
 
         //reg setting
         pipeState.ifreg = mips_state.reg;
         pipeState.idreg = pipeState_Next.idreg;
-        pipeState.exreg = pipeState_Next.exreg;
+        pipeState.ex1reg = pipeState_Next.ex1reg;
+        pipeState.ex2reg = pipeState_Next.ex2reg;
+        pipeState.ex3reg = pipeState_Next.ex3reg;
+        pipeState.ex4reg = pipeState_Next.ex4reg;
         pipeState.memreg = pipeState_Next.memreg;
         pipeState.wbreg = pipeState_Next.wbreg;
         
         pipeState_Next.wbreg = pipeState_Next.memreg;
-        pipeState_Next.memreg = pipeState_Next.exreg;
-        pipeState_Next.exreg = pipeState_Next.idreg;
+        pipeState_Next.memreg = pipeState_Next.ex4reg;
+        pipeState_Next.ex4reg = pipeState_Next.ex3reg;
+        pipeState_Next.ex3reg = pipeState_Next.ex2reg;
+        pipeState_Next.ex2reg = pipeState_Next.ex1reg;
+        pipeState_Next.ex1reg = pipeState_Next.idreg;
         pipeState_Next.idreg = pipeState.ifreg;
 
         //execute setting
-        pipeState.ex = executed;
+
+        pipeState.IF = executed;
+        pipeState.id = pipeState_Next.id;
+        pipeState.ex1 = pipeState_Next.ex1;
+        pipeState.ex2 = pipeState_Next.ex2;
+        pipeState.ex3 = pipeState_Next.ex3;
+        pipeState.ex4 = pipeState_Next.ex4;
         pipeState.mem = pipeState_Next.mem;
         pipeState.wb = pipeState_Next.wb;
 
-        pipeState_Next.mem = pipeState.ex;
         pipeState_Next.wb = pipeState_Next.mem;
+        pipeState_Next.mem = pipeState_Next.ex4;
+        pipeState_Next.ex4 = pipeState_Next.ex3;
+        pipeState_Next.ex3 = pipeState_Next.ex2;
+        pipeState_Next.ex2 = pipeState_Next.ex1;
+        pipeState_Next.ex1 = pipeState_Next.id;
+        pipeState_Next.id = pipeState.IF;
 
         //is_load
         pipeState.if_isload = is_load;
         pipeState.id_isload = pipeState_Next.id_isload;
-        pipeState.ex_isload = pipeState_Next.ex_isload;
+        pipeState.ex1_isload = pipeState_Next.ex1_isload;
+        pipeState.ex2_isload = pipeState_Next.ex2_isload;
+        pipeState.ex3_isload = pipeState_Next.ex3_isload;
+        pipeState.ex4_isload = pipeState_Next.ex4_isload;
 
-        pipeState_Next.ex_isload = pipeState_Next.id_isload;
+        pipeState_Next.ex4_isload = pipeState_Next.ex3_isload;
+        pipeState_Next.ex3_isload = pipeState_Next.ex2_isload;
+        pipeState_Next.ex2_isload = pipeState_Next.ex1_isload;
+        pipeState_Next.ex1_isload = pipeState_Next.id_isload;
         pipeState_Next.id_isload = pipeState.if_isload;
+
+        //is_mulDiv
+        pipeState.if_isMulDiv = is_mulDiv;
+        pipeState.id_isMulDiv = pipeState_Next.id_isMulDiv;
+        pipeState.ex1_isMulDiv = pipeState_Next.ex1_isMulDiv;
+        pipeState.ex2_isMulDiv = pipeState_Next.ex2_isMulDiv;
+        pipeState.ex3_isMulDiv = pipeState_Next.ex3_isMulDiv;
+
+        pipeState_Next.ex3_isMulDiv = pipeState_Next.ex2_isMulDiv;
+        pipeState_Next.ex2_isMulDiv = pipeState_Next.ex1_isMulDiv;
+        pipeState_Next.ex1_isMulDiv = pipeState_Next.id_isMulDiv;
+        pipeState_Next.id_isMulDiv = pipeState.if_isMulDiv;
+
     }
 
-    if(stalling == 2)
+    if(stalling == 1)
     {
         pipeState.cycle = CurCycle;
         pipeState.wbInstr = pipeState.memInstr;
-        pipeState.memInstr = pipeState.exInstr;
+        pipeState.memInstr = pipeState.ex4Instr;
+        pipeState.ex4Instr = pipeState.ex3Instr;
+        pipeState.ex3Instr = pipeState.ex2Instr;
+        pipeState.ex2Instr = pipeState.ex1Instr;
+
         pipeState_Next.wbInstr =  pipeState.memInstr;
+        pipeState_Next.memInstr =  pipeState.ex4Instr;
+        pipeState_Next.ex4Instr =  pipeState.ex3Instr;
+        pipeState_Next.ex3Instr = pipeState.ex2Instr;
     }
 }
 
 void initPipeline(PipeState_Next &pipeState_Next)
 {
     pipeState_Next.idInstr = 0x0;
-    pipeState_Next.exInstr = 0x0;
+    pipeState_Next.ex1Instr = 0x0;
+    pipeState_Next.ex2Instr = 0x0;
+    pipeState_Next.ex3Instr = 0x0;
+    pipeState_Next.ex4Instr = 0x0;
     pipeState_Next.memInstr = 0x0;
     pipeState_Next.wbInstr = 0x0;
+
     pipeState_Next.idPC = 0x1;
-    pipeState_Next.exPC = 0x1;
+    pipeState_Next.ex1PC = 0x1;
+    pipeState_Next.ex2PC = 0x1;
+    pipeState_Next.ex3PC = 0x1;
+    pipeState_Next.ex4PC = 0x1;
     pipeState_Next.memPC = 0x1;
     pipeState_Next.wbPC = 0x1;
+    
+    pipeState_Next.id = 1;
+    pipeState_Next.ex1 = 1;
+    pipeState_Next.ex2 = 1;
+    pipeState_Next.ex3 = 1;
+    pipeState_Next.ex4 = 1;
+    pipeState_Next.mem = 1;
     pipeState_Next.wb = 1;
+
 }
 
 //Byte's the smallest thing that can hold the opcode...
@@ -521,19 +617,25 @@ void dumpPipeState(PipeState & state)
     if(pipe_out)
     {
         pipe_out << "Cycle: " << state.cycle << endl;
-        pipe_out << "-----------------------------------------------------------------------------------------------------------------------------------" << endl;
+        pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
         pipe_out << "|";
         printInstr(state.ifInstr, pipe_out);
         pipe_out << "|";
         printInstr(state.idInstr, pipe_out);
         pipe_out << "|";
-        printInstr(state.exInstr, pipe_out);
+        printInstr(state.ex1Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(state.ex2Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(state.ex3Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(state.ex4Instr, pipe_out);
         pipe_out << "|";
         printInstr(state.memInstr, pipe_out);
         pipe_out << "|";
         printInstr(state.wbInstr, pipe_out);
-        pipe_out << "|" << endl;
-        pipe_out << "-----------------------------------------------------------------------------------------------------------------------------------" << endl;
+        pipe_out << "|";
+        pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
     }
     else
     {

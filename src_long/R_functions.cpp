@@ -2,7 +2,7 @@
 #include <iostream>
 using namespace std;
 
-void r_type(State& mips_state, bool& executed, Decode& decode){
+void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv){
 
 	// uint32_t instr = mips_state.ram[mips_state.pc];
 	// uint32_t opcode = (mips_state.ram[mips_state.pc] >> 26) & 0x0000003F;
@@ -10,7 +10,9 @@ void r_type(State& mips_state, bool& executed, Decode& decode){
 	// uint32_t shamt_field = (instr & 0x000007C0) >> 6;
 	// uint32_t rd ;
 	// uint32_t rt = (instr & 0x001F0000) >> 16; 
-	// uint32_t rs = (instr & 0x03E00000) >> 21; 	
+	// uint32_t rs = (instr & 0x03E00000) >> 21; 
+
+	is_mulDiv = false;	
 
 	if(!executed && decode.opcode_R == 0x00000000){
 		switch(decode.funct_field){
@@ -74,10 +76,12 @@ void r_type(State& mips_state, bool& executed, Decode& decode){
 			case 0x00000010:
 					mfhi(mips_state, decode.rd);
 					executed = true;
+					is_mulDiv = true;
 					return;
 			case 0x00000012:
 					mflo(mips_state, decode.rd);
 					executed = true;
+					is_mulDiv = true;
 					return;
 			case 0x00000018:
 					mult(mips_state, decode.rt, decode.rs);

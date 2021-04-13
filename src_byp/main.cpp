@@ -9,6 +9,9 @@ using namespace std;
 
 int main(int argc, char* argv[]){
 
+	int CurCycle = 0;
+
+
    try{						//Exception and Error handling
 
 		if(argc != 2){
@@ -29,7 +32,6 @@ int main(int argc, char* argv[]){
 		PipeState_Next pipeState_Next;
 		Decode decode;
 
-		int CurCycle = 0;
 		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage
 
 
@@ -77,7 +79,7 @@ int main(int argc, char* argv[]){
 			
 			//dumpPipeState(pipeState);
 
-			checkForStall(pipeState, ex_isload, stalling);
+			//checkForStall(pipeState, ex_isload, stalling);
 
 			CurCycle = CurCycle + 1;
 
