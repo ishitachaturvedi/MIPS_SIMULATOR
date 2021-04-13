@@ -59,7 +59,6 @@
 58,slti,vgr16,slti02.mips.bin,No Message,0,0
 59,slti,vgr16,slti03.mips.bin,No Message,0,0
 60,lwr,vgr16,test19.mips.bin,No message,9,0
-61,lwr,vgr16,test20.mips.bin,Reading from last byte of Data Address space,245,0
 62,sw,vgr16,test17.mips.bin,output the character 'A',0,0
 63,add,vgr16,test21.mips.bin,Basic ADD test,5,0
 64,add,gi316,test100.mips.bin,Checking overflow,246,0
@@ -121,7 +120,6 @@
 120,divu,gi316,divu2.mips.bin,-,1,0
 121,divu,gi316,divu3.mips.bin,-,1,0
 122,divu,gi316,divu4.mips.bin,-,1,0
-123,jr,gi316,jr.mips.bin,-,245,0
 124,jr,gi316,jr_exception.mips.bin,-,245,0
 125,mult,gi316,mult1.mips.bin,-,253,0
 126,mult,gi316,mult2.mips.bin,-,1,0

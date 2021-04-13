@@ -74,52 +74,85 @@ enum FUN_IDS
     FUN_XOR = 0x26
 };
 
-//move pipeline one cycle forward
-void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle)
+
+void checkForStall(PipeState &pipeState, bool is_load, int &stalling)
 {
-    pipeState.cycle = CurCycle;
-			pipeState.ifInstr = mips_state.ram[mips_state.pc];
-			pipeState.idInstr = pipeState_Next.idInstr;
-			pipeState.exInstr = pipeState_Next.exInstr;
-			pipeState.memInstr = pipeState_Next.memInstr;
-			pipeState.wbInstr = pipeState_Next.wbInstr;
+    Decode id;
+    Decode ex;
+    decode_inst(pipeState.idInstr, id);
+    decode_inst(pipeState.exInstr, ex);
 
-			pipeState_Next.wbInstr = pipeState_Next.memInstr;
-			pipeState_Next.memInstr = pipeState_Next.exInstr;
-			pipeState_Next.exInstr = pipeState_Next.idInstr;
-			pipeState_Next.idInstr = pipeState.ifInstr;
+    if((id.rs == ex.rt || id.rd == ex.rt) && ex.rt != 0x0 && is_load && stalling == 0)
+    {
+        stalling = 1;
+    }
+}
 
-			//PC setting
-			pipeState.ifPC = mips_state.pc;
-			pipeState.idPC = pipeState_Next.idPC;
-			pipeState.exPC = pipeState_Next.exPC;
-			pipeState.memPC = pipeState_Next.memPC;
-			pipeState.wbPC = pipeState_Next.wbPC;
-			
-			pipeState_Next.wbPC = pipeState_Next.memPC;
-			pipeState_Next.memPC = pipeState_Next.exPC;
-			pipeState_Next.exPC = pipeState_Next.idPC;
-			pipeState_Next.idPC = pipeState.ifPC;
+//move pipeline one cycle forward
+void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, int stalling, bool is_load)
+{
+    if(stalling != 2)
+    {    
+        pipeState.cycle = CurCycle;
+        pipeState.ifInstr = mips_state.ram[mips_state.pc];
+        pipeState.idInstr = pipeState_Next.idInstr;
+        pipeState.exInstr = pipeState_Next.exInstr;
+        pipeState.memInstr = pipeState_Next.memInstr;
+        pipeState.wbInstr = pipeState_Next.wbInstr;
 
-			//reg setting
-			pipeState.ifreg = mips_state.reg;
-			pipeState.idreg = pipeState_Next.idreg;
-			pipeState.exreg = pipeState_Next.exreg;
-			pipeState.memreg = pipeState_Next.memreg;
-			pipeState.wbreg = pipeState_Next.wbreg;
-			
-			pipeState_Next.wbreg = pipeState_Next.memreg;
-			pipeState_Next.memreg = pipeState_Next.exreg;
-			pipeState_Next.exreg = pipeState_Next.idreg;
-			pipeState_Next.idreg = pipeState.ifreg;
+        pipeState_Next.wbInstr = pipeState_Next.memInstr;
+        pipeState_Next.memInstr = pipeState_Next.exInstr;
+        pipeState_Next.exInstr = pipeState_Next.idInstr;
+        pipeState_Next.idInstr = pipeState.ifInstr;
 
-			//execute setting
-			pipeState.ex = executed;
-			pipeState.mem = pipeState_Next.mem;
-			pipeState.wb = pipeState_Next.wb;
+        //PC setting
+        pipeState.ifPC = mips_state.pc;
+        pipeState.idPC = pipeState_Next.idPC;
+        pipeState.exPC = pipeState_Next.exPC;
+        pipeState.memPC = pipeState_Next.memPC;
+        pipeState.wbPC = pipeState_Next.wbPC;
+        
+        pipeState_Next.wbPC = pipeState_Next.memPC;
+        pipeState_Next.memPC = pipeState_Next.exPC;
+        pipeState_Next.exPC = pipeState_Next.idPC;
+        pipeState_Next.idPC = pipeState.ifPC;
 
-			pipeState_Next.mem = pipeState.ex;
-			pipeState_Next.wb = pipeState_Next.mem;
+        //reg setting
+        pipeState.ifreg = mips_state.reg;
+        pipeState.idreg = pipeState_Next.idreg;
+        pipeState.exreg = pipeState_Next.exreg;
+        pipeState.memreg = pipeState_Next.memreg;
+        pipeState.wbreg = pipeState_Next.wbreg;
+        
+        pipeState_Next.wbreg = pipeState_Next.memreg;
+        pipeState_Next.memreg = pipeState_Next.exreg;
+        pipeState_Next.exreg = pipeState_Next.idreg;
+        pipeState_Next.idreg = pipeState.ifreg;
+
+        //execute setting
+        pipeState.ex = executed;
+        pipeState.mem = pipeState_Next.mem;
+        pipeState.wb = pipeState_Next.wb;
+
+        pipeState_Next.mem = pipeState.ex;
+        pipeState_Next.wb = pipeState_Next.mem;
+
+        //is_load
+        pipeState.if_isload = is_load;
+        pipeState.id_isload = pipeState_Next.id_isload;
+        pipeState.ex_isload = pipeState_Next.ex_isload;
+
+        pipeState_Next.ex_isload = pipeState_Next.id_isload;
+        pipeState_Next.id_isload = pipeState.if_isload;
+    }
+
+    if(stalling == 2)
+    {
+        pipeState.cycle = CurCycle;
+        pipeState.wbInstr = pipeState.memInstr;
+        pipeState.memInstr = pipeState.exInstr;
+        pipeState_Next.wbInstr =  pipeState.memInstr;
+    }
 }
 
 void initPipeline(PipeState_Next &pipeState_Next)
@@ -377,6 +410,7 @@ static void handleImmInst(uint32_t instr, ostream & out_stream)
                     sb << " " << "bltzal" << " " << regNames[rt] << ", " << hex << "0x" << static_cast<uint32_t>(imm) << " "; 
                     break;
             }
+            break;
         default:
             //This should never happen.
             sb << "ILLEGAL";

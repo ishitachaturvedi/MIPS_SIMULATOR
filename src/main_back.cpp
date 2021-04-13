@@ -5,8 +5,6 @@
 #include <fstream>
 #include <iomanip>
 
-using namespace std;
-
 int main(int argc, char* argv[]){
 
    try{						//Exception and Error handling
@@ -28,6 +26,8 @@ int main(int argc, char* argv[]){
 		PipeState pipeState;	
 		PipeState_Next pipeState_Next;
 		Decode decode;
+		Decode decode_ex;
+		decode_ex.rd = 0x0;
 
 		int CurCycle = 0;
 		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage
@@ -35,8 +35,7 @@ int main(int argc, char* argv[]){
 
 		mips_state.ram.resize(MEM_SIZE);	//This will allocate memory for the whole RAM
 
-		bool is_load = false;
-		bool ex_isload = false;
+		bool is_load;
 
 		setUp(mips_state, fileName);		//Passes the instructions to the vector
 
@@ -44,26 +43,21 @@ int main(int argc, char* argv[]){
 
 		for(;;){
 
+			//checkExec(mips_state.reg, mips_state.pc); //checks if the address is in the executable range
 			mips_state.reg[0] = 0;		//register $0 must retain the value zero in every new clock cycle of the processor
 			executed = false;		//every new clock cycle the flag is turned off since no instruction has yet been executed
+			//tempNPC = mips_state.npc;	//Since the instruction that will be executed will change the npc it needs to be stored
 
 			uint32_t instr = mips_state.ram[mips_state.pc];
 
 			//Send Instruction for Decode
 			decode_inst(instr,decode);
 
-			if(stalling !=2)
-			{
-				tempNPC = mips_state.npc;
-			}
+			checkForStall(decode, decode_ex,is_load,stalling);
 
-			// Execute if not stalling
-			if(stalling != 2)
+			if(stalling != 0)
 			{
-				//Execute Instructions
-				r_type(mips_state,executed,decode);
-				i_type(mips_state,executed,decode,is_load);
-				j_type(mips_state,executed,decode);
+				stalling = stalling + 1;
 			}
 
 			if(stalling == 3)
@@ -71,33 +65,32 @@ int main(int argc, char* argv[]){
 				stalling = 0;
 			}
 
-			moveOneCycle(mips_state, pipeState, pipeState_Next, executed, CurCycle, stalling, is_load);
+			//if(stalling == 0)
+			{
+				tempNPC = mips_state.npc;
+				//Execute Instructions
+				r_type(mips_state,executed,decode);
+				i_type(mips_state,executed,decode,is_load);
+				j_type(mips_state,executed,decode);
+				moveOneCycle(mips_state, pipeState, pipeState_Next, executed, CurCycle);
+				decode_ex = decode;
+				mips_state.pc = tempNPC;	//Set the value of pc (the address of the next instruction that is going to execute) to the
+			}
 
-			ex_isload = pipeState.ex_isload;
-			
-			dumpPipeState(pipeState);
-
-			checkForStall(pipeState, ex_isload, stalling);
-
+			//dumpPipeState(pipeState);
 			CurCycle = CurCycle + 1;
-
-			if(stalling !=1)
-			{
-				mips_state.pc = tempNPC;
-			}
-
-			if(stalling != 0)
-			{
-				stalling = stalling + 1;
-			}
 
 			checkExit(pipeState.wbreg, pipeState.wbPC);
 
 			
+			//if(!executed){			//if no instruction from the 3 types has executed at this stage (ie.false), then the binary must be invalid or an unknown error occurred
 			if(!pipeState.wb){
 				throw (static_cast<int>(Exception::INSTRUCTION));
 			}		
 			
+			//mips_state.pc = tempNPC;	//Set the value of pc (the address of the next instruction that is going to execute) to the
+							//original value of npc
+
 		};
 
     }

@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <vector>
 #include "setUp.hpp"
+#include "Decode.hpp"
 
 #ifndef DUMPHPP
 #define DUMPHPP
@@ -36,6 +37,10 @@ struct PipeState
     bool ex;
     bool mem;
     bool wb;
+
+    bool if_isload;
+    bool id_isload;
+    bool ex_isload;
 };
 
 struct PipeState_Next
@@ -56,10 +61,15 @@ struct PipeState_Next
 
     bool mem;
     bool wb;
+
+    bool id_isload;
+    bool ex_isload;
+
 };
 
 void dumpPipeState(PipeState & state);
-void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle);
+void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, int stalling, bool is_load);
 void initPipeline(PipeState_Next &pipeState_Next);
+void checkForStall(PipeState & pipeState, bool is_load, int &stalling);
 
 #endif /* DUMPHPP */

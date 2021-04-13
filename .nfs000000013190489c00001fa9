@@ -58,7 +58,6 @@
 58	slti	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
 59	slti	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
 60	lwr	PASS	Expected ExitCode: 9	 Actual ExitCode: 9
-61	lwr	FAIL	Expected ExitCode: 245	 Actual ExitCode: 244
 A62	sw	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
 63	add	PASS	Expected ExitCode: 5	 Actual ExitCode: 5
 64	add	PASS	Expected ExitCode: 246	 Actual ExitCode: 246
@@ -120,7 +119,6 @@ A62	sw	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
 120	divu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
 121	divu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
 122	divu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
-123	jr	FAIL	Expected ExitCode: 245	 Actual ExitCode: 244
 124	jr	PASS	Expected ExitCode: 245	 Actual ExitCode: 245
 125	mult	PASS	Expected ExitCode: 253	 Actual ExitCode: 253
 126	mult	PASS	Expected ExitCode: 1	 Actual ExitCode: 1

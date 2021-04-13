@@ -8,8 +8,6 @@ void j_type(State& mips_state, bool& executed){
 		int32_t address = instr & 0x03FFFFFF;
 		int32_t opcode = (instr & 0xFC000000) >> 26;
 
-		cout<<"J EXEC\n";
-	
 		switch(opcode) {
 			case 0x00000002:
 				j(mips_state, address);

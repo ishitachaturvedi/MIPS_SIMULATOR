@@ -21,6 +21,8 @@ void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load){
 		// else{
 		// 	SignExtImm = immediate;
 		// }
+
+		is_load = false;
  
 		switch(decode.opcode){
 			case 0x00000008:

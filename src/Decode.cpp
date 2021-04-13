@@ -1,5 +1,6 @@
 #include "Decode.hpp"
 using namespace std;
+#include <iostream>
 
 void decode_inst(uint32_t instr, Decode& decode)
 {
@@ -20,13 +21,5 @@ void decode_inst(uint32_t instr, Decode& decode)
     else
     {
         decode.SignExtImm = decode.immediate;
-    }
-}
-
-void checkForStall(Decode &decode, Decode &decode_ex, bool is_load, int &stalling)
-{
-    if((decode.rs == decode_ex.rd || decode.rt == decode_ex.rd) && decode_ex.rd != 0x0 && is_load && stalling == 0)
-    {
-        stalling = 1;
     }
 }

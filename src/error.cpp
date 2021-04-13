@@ -21,6 +21,9 @@ void checkExit(const std::vector<int32_t>& reg, uint32_t addr)
 		uint32_t out = reg[2] & 0x000000FF;
 		std::exit(out);
 	}
+	// if(((addr < ADDR_INSTR) || (addr > (ADDR_INSTR + ADDR_INSTR_L - 1))) && (addr != ADDR_NULL)){
+	// 	throw (static_cast<int>(Exception::MEMORY));
+	// }
 }
 
 void checkRead(uint32_t addr){

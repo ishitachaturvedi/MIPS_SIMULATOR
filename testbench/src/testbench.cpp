@@ -48,12 +48,18 @@ int main(int argc, char* argv[]){
 				v[i].setResult("PASS");
 			}
 			else{
+				std::cout << "FAILING HERE\n";
 				v[i].setResult("FAIL");
 			}
 		}
 		else{
 			std::string output = exec(command.c_str());
+			if(output == v[i].getOutput())
+			{
+				std::cout<<"WRONG VAL\n";
+			}
 			if(s == v[i].getExitCode() && output == v[i].getOutput()){
+			//if(output == v[i].getOutput()){
 				v[i].setResult("PASS");
 			}
 			else{
