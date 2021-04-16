@@ -1,4 +1,5 @@
 #include "io.hpp"
+#include <iostream>
 
 std::string exec(const char* cmd) {
     char buffer[64];

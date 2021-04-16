@@ -83,7 +83,7 @@
 83,srlv,gi316,test119.mips.bin,see code,1,0
 84,j,vgr16,test23.mips.bin,ADDI forllowed by JUMP,246,0
 85,stack,vgr16,test24.mips.bin,C test that calculates 5! recursively,128,0
-86,lw sw,vgr16,test26.mips.bin,Tests sw lw sb lb,255,0
+86,lwsw,vgr16,test26.mips.bin,Tests sw lw sb lb,255,0
 87,char,vgr16,test25.mips.bin,Teast loading and storting a char,72,0
 88,stress,gi316,testp.mips.bin,testing general,0,0
 89,stress,gi316,hard_set.mips.bin,-,1,0

@@ -10,8 +10,7 @@ using namespace std;
 int main(int argc, char* argv[]){
 
 	int CurCycle = 0;
-
-   try{						//Exception and Error handling
+   	try{						//Exception and Error handling
 
 		if(argc != 2){
 			std::cerr << "Error: Expected a Binary file a input" << std::endl;
@@ -70,7 +69,7 @@ int main(int argc, char* argv[]){
 				stalling = 0;
 			}
 
-			dumpPipeState(pipeState);
+			//dumpPipeState(pipeState);
 
 			checkForStall(pipeState, stalling);
 
@@ -81,7 +80,7 @@ int main(int argc, char* argv[]){
 				mips_state.pc = tempNPC;
 			}
 
-			checkExit(pipeState.wbreg, pipeState.wbPC);
+			checkExit(pipeState.wbreg, pipeState.wbPC,CurCycle);
 
 			
 			if(!pipeState.wb){
@@ -93,6 +92,7 @@ int main(int argc, char* argv[]){
     }
 //
 	catch (const int EXIT_CODE){		//Exceptions and Errors are caught here
+		cout << CurCycle << " \n";
 		switch(EXIT_CODE){
 			case 0xFFFFFFF6:
 				std::exit(static_cast<int>(Exception::ARITHMETIC));

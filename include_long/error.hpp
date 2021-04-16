@@ -18,7 +18,7 @@ void checkRead(uint32_t addr);
 //if addr = 0
 //void checkExec(const std::vector<int32_t>&, uint32_t addr);
 void checkExec(const std::vector<int32_t>& reg, uint32_t addr);
-void checkExit(const std::vector<int32_t>& reg, uint32_t addr);
+void checkExit(const std::vector<int32_t>& reg, uint32_t addr, int CurCycle);
 
 //This functions should be called if the binary read/writes to the corresponding
 //address. They also handle errors

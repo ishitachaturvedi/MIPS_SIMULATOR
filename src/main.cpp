@@ -7,9 +7,10 @@
 
 using namespace std;
 
-int main(int argc, char* argv[]){
-
-   try{						//Exception and Error handling
+int main(int argc, char* argv[]){	
+	
+	int CurCycle = 0;
+   	try{						//Exception and Error handling
 
 		if(argc != 2){
 			std::cerr << "Error: Expected a Binary file a input" << std::endl;
@@ -29,7 +30,6 @@ int main(int argc, char* argv[]){
 		PipeState_Next pipeState_Next;
 		Decode decode;
 
-		int CurCycle = 0;
 		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage
 
 
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]){
 
 			ex_isload = pipeState.ex_isload;
 			
-			dumpPipeState(pipeState);
+			//dumpPipeState(pipeState);
 
 			checkForStall(pipeState, ex_isload, stalling);
 
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]){
 				stalling = stalling + 1;
 			}
 
-			checkExit(pipeState.wbreg, pipeState.wbPC);
+			checkExit(pipeState.wbreg, pipeState.wbPC,CurCycle);
 
 			
 			if(!pipeState.wb){
@@ -103,6 +103,7 @@ int main(int argc, char* argv[]){
     }
 
 	catch (const int EXIT_CODE){		//Exceptions and Errors are caught here
+		cout << CurCycle << " \n";
 		switch(EXIT_CODE){
 			case 0xFFFFFFF6:
 				std::exit(static_cast<int>(Exception::ARITHMETIC));
