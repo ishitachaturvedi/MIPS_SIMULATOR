@@ -531,7 +531,6 @@ void sw(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 			}
 			mips_state.ram[addr / 4] = mips_state.reg[rt];
 		}
-
 		++mips_state.npc;
 	}
 

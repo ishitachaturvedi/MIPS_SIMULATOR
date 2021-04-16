@@ -82,20 +82,16 @@ void checkForStall(PipeState &pipeState, int &stalling)
     Decode ex2;
     Decode ex3;
     Decode ex4;
-    Decode mem;
+    //Decode mem;
     decode_inst(pipeState.idInstr, id);
     decode_inst(pipeState.ex1Instr, ex1);
     decode_inst(pipeState.ex2Instr, ex2);
     decode_inst(pipeState.ex3Instr, ex3);
     decode_inst(pipeState.ex4Instr, ex4);
-    decode_inst(pipeState.memInstr, mem);
 
-    // if ex1, ex2, ex3 or ex4 are load inst which is being waited on, we stall
+    // if ex1 are load inst which is being waited on, we stall
     if(
-        (((id.rs == ex1.rt || id.rd == ex1.rt) && ex1.rt != 0x0 && pipeState.ex1_isload && !(pipeState.ex1Instr == pipeState.memInstr))
-        || ((id.rs == ex2.rt || id.rd == ex2.rt) && ex2.rt != 0x0 && pipeState.ex2_isload && !(pipeState.ex2Instr == pipeState.memInstr))
-        || ((id.rs == ex3.rt || id.rd == ex3.rt) && ex3.rt != 0x0 && pipeState.ex3_isload && !(pipeState.ex3Instr == pipeState.memInstr))
-        || ((id.rs == ex4.rt || id.rd == ex4.rt) && ex4.rt != 0x0 && pipeState.ex4_isload && !(pipeState.ex4Instr == pipeState.memInstr))) 
+        ((id.rs == ex1.rt || id.rd == ex1.rt) && ex1.rt != 0x0 && pipeState.ex1_isload && !(pipeState.ex1Instr == pipeState.ex2Instr))
     )
     {
         stalling = 1;
@@ -103,8 +99,8 @@ void checkForStall(PipeState &pipeState, int &stalling)
 
     // if ex1, ex2, ex3 are mulDiv inst which is being waited on, we stall
     if(
-        (((id.rs == ex1.rd || id.rt == ex1.rd) && ex1.rd != 0x0 && pipeState.ex1_isMulDiv && !(pipeState.ex1Instr == pipeState.ex4Instr))
-        || ((id.rs == ex2.rd || id.rt == ex2.rd) && ex2.rd != 0x0 && pipeState.ex2_isMulDiv && !(pipeState.ex2Instr == pipeState.ex4Instr))
+        (((id.rs == ex1.rd || id.rt == ex1.rd) && ex1.rd != 0x0 && pipeState.ex1_isMulDiv && !(pipeState.ex1Instr == pipeState.ex3Instr))
+        || ((id.rs == ex2.rd || id.rt == ex2.rd) && ex2.rd != 0x0 && pipeState.ex2_isMulDiv && !(pipeState.ex2Instr == pipeState.ex3Instr))
         || ((id.rs == ex3.rd || id.rt == ex3.rd) && ex3.rd != 0x0 && pipeState.ex3_isMulDiv && !(pipeState.ex3Instr == pipeState.ex4Instr)))
     )
     {
@@ -118,6 +114,7 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
     std::flush(std::cout);
     if(stalling != 1)
     {    
+        //There is no memStr state it is basically ex2, ex3 and ex4 are dummy states
         // Instruction shifting
         pipeState.cycle = CurCycle;
         pipeState.ifInstr = mips_state.ram[mips_state.pc];
@@ -126,11 +123,9 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
         pipeState.ex2Instr = pipeState_Next.ex2Instr;
         pipeState.ex3Instr = pipeState_Next.ex3Instr;
         pipeState.ex4Instr = pipeState_Next.ex4Instr;
-        pipeState.memInstr = pipeState_Next.memInstr;
         pipeState.wbInstr = pipeState_Next.wbInstr;
 
-        pipeState_Next.wbInstr = pipeState_Next.memInstr;
-        pipeState_Next.memInstr = pipeState_Next.ex4Instr;
+        pipeState_Next.wbInstr = pipeState_Next.ex4Instr;
         pipeState_Next.ex4Instr = pipeState_Next.ex3Instr;
         pipeState_Next.ex3Instr = pipeState_Next.ex2Instr;
         pipeState_Next.ex2Instr = pipeState_Next.ex1Instr;
@@ -144,11 +139,9 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
         pipeState.ex2PC = pipeState_Next.ex2PC;
         pipeState.ex3PC = pipeState_Next.ex3PC;
         pipeState.ex4PC = pipeState_Next.ex4PC;
-        pipeState.memPC = pipeState_Next.memPC;
         pipeState.wbPC = pipeState_Next.wbPC;
         
-        pipeState_Next.wbPC = pipeState_Next.memPC;
-        pipeState_Next.memPC = pipeState_Next.ex4PC;
+        pipeState_Next.wbPC = pipeState_Next.ex3PC;
         pipeState_Next.ex4PC = pipeState_Next.ex3PC;
         pipeState_Next.ex3PC = pipeState_Next.ex2PC;
         pipeState_Next.ex2PC = pipeState_Next.ex1PC;
@@ -162,11 +155,9 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
         pipeState.ex2reg = pipeState_Next.ex2reg;
         pipeState.ex3reg = pipeState_Next.ex3reg;
         pipeState.ex4reg = pipeState_Next.ex4reg;
-        pipeState.memreg = pipeState_Next.memreg;
         pipeState.wbreg = pipeState_Next.wbreg;
         
-        pipeState_Next.wbreg = pipeState_Next.memreg;
-        pipeState_Next.memreg = pipeState_Next.ex4reg;
+        pipeState_Next.wbreg = pipeState_Next.ex4reg;
         pipeState_Next.ex4reg = pipeState_Next.ex3reg;
         pipeState_Next.ex3reg = pipeState_Next.ex2reg;
         pipeState_Next.ex2reg = pipeState_Next.ex1reg;
@@ -181,11 +172,9 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
         pipeState.ex2 = pipeState_Next.ex2;
         pipeState.ex3 = pipeState_Next.ex3;
         pipeState.ex4 = pipeState_Next.ex4;
-        pipeState.mem = pipeState_Next.mem;
         pipeState.wb = pipeState_Next.wb;
 
-        pipeState_Next.wb = pipeState_Next.mem;
-        pipeState_Next.mem = pipeState_Next.ex4;
+        pipeState_Next.wb = pipeState_Next.ex4;
         pipeState_Next.ex4 = pipeState_Next.ex3;
         pipeState_Next.ex3 = pipeState_Next.ex2;
         pipeState_Next.ex2 = pipeState_Next.ex1;
@@ -223,14 +212,12 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
     if(stalling == 1)
     {
         pipeState.cycle = CurCycle;
-        pipeState.wbInstr = pipeState.memInstr;
-        pipeState.memInstr = pipeState.ex4Instr;
+        pipeState.wbInstr = pipeState.ex4Instr;
         pipeState.ex4Instr = pipeState.ex3Instr;
         pipeState.ex3Instr = pipeState.ex2Instr;
         pipeState.ex2Instr = pipeState.ex1Instr;
 
-        pipeState_Next.wbInstr =  pipeState.memInstr;
-        pipeState_Next.memInstr =  pipeState.ex4Instr;
+        pipeState_Next.wbInstr =  pipeState.ex4Instr;
         pipeState_Next.ex4Instr =  pipeState.ex3Instr;
         pipeState_Next.ex3Instr = pipeState.ex2Instr;
     }
@@ -243,7 +230,6 @@ void initPipeline(PipeState_Next &pipeState_Next)
     pipeState_Next.ex2Instr = 0x0;
     pipeState_Next.ex3Instr = 0x0;
     pipeState_Next.ex4Instr = 0x0;
-    pipeState_Next.memInstr = 0x0;
     pipeState_Next.wbInstr = 0x0;
 
     pipeState_Next.idPC = 0x1;
@@ -251,7 +237,6 @@ void initPipeline(PipeState_Next &pipeState_Next)
     pipeState_Next.ex2PC = 0x1;
     pipeState_Next.ex3PC = 0x1;
     pipeState_Next.ex4PC = 0x1;
-    pipeState_Next.memPC = 0x1;
     pipeState_Next.wbPC = 0x1;
     
     pipeState_Next.id = 1;
@@ -259,7 +244,6 @@ void initPipeline(PipeState_Next &pipeState_Next)
     pipeState_Next.ex2 = 1;
     pipeState_Next.ex3 = 1;
     pipeState_Next.ex4 = 1;
-    pipeState_Next.mem = 1;
     pipeState_Next.wb = 1;
 
 }

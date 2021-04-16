@@ -82,7 +82,6 @@ int main(int argc, char* argv[]){
 
 			checkExit(pipeState.wbreg, pipeState.wbPC,CurCycle);
 
-			
 			if(!pipeState.wb){
 				throw (static_cast<int>(Exception::INSTRUCTION));
 			}		
