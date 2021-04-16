@@ -165,3 +165,4 @@
 166,sh,vgr16,sh03.mips.bin,No Message,245,0
 167,lwr,vgr16,lwr01.mips.bin,No Message,1,0
 168,lwr,vgr16,lwr02.mips.bin,No Message,1,0
+169,cpx-mul,ishitac,ubmark-cmplx-mult.mips.bin,No Message,0,0

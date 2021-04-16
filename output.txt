@@ -1,0 +1,332 @@
+8 
+1	jr	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+9 
+2	addi	PASS	Expected ExitCode: 6	 Actual ExitCode: 6
+6291453 
+3	addi	PASS	Expected ExitCode: 246	 Actual ExitCode: 246
+196608 
+4	addi	PASS	Expected ExitCode: 246	 Actual ExitCode: 246
+9 
+5	addiu	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+10 
+6	andi	PASS	Expected ExitCode: 6	 Actual ExitCode: 6
+11 
+7	beq	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+12 
+8	beq	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+9	beq	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+8202 
+10	beq	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+13 
+11	beq	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+13 
+12	beq	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+10 
+13	beq	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+12 
+14	bne	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+13 
+15	bne	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+12 
+16	bne	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+8203 
+17	bne	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+18	bne	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+19	bne	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+20	bne	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+12 
+21	bgez	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+13 
+22	bgez	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+12 
+23	bgez	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+24	bgezal	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+25	bgezal	PASS	Expected ExitCode: 8	 Actual ExitCode: 8
+13 
+26	bgezal	PASS	Expected ExitCode: 12	 Actual ExitCode: 12
+12 
+27	bgtz	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+28	bgtz	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+29	blez	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+12 
+30	blez	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+13 
+31	bltz	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+32	bltz	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+33	bltz	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+13 
+34	bltzal	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+10 
+35	bltzal	PASS	Expected ExitCode: 8	 Actual ExitCode: 8
+12 
+36	lbu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+37	lbu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+38	lbu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+5 
+39	lbu	PASS	Expected ExitCode: 245	 Actual ExitCode: 245
+12 
+40	lb	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+41	lb	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+42	lb	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+5 
+43	lb	PASS	Expected ExitCode: 245	 Actual ExitCode: 245
+14 
+44	lb	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+12 
+45	lhu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+46	lhu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+47	lhu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+5 
+48	lhu	PASS	Expected ExitCode: 245	 Actual ExitCode: 245
+12 
+49	lh	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+50	lh	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+51	lh	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+5 
+52	lh	PASS	Expected ExitCode: 245	 Actual ExitCode: 245
+14 
+53	lh	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+10 
+54	sltiu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+10 
+55	sltiu	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+12 
+56	sltiu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+10 
+57	slti	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+10 
+58	slti	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+13 
+59	slti	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+14 
+60	lwr	PASS	Expected ExitCode: 9	 Actual ExitCode: 9
+13 
+62	sw	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+11 
+63	add	PASS	Expected ExitCode: 5	 Actual ExitCode: 5
+3 
+64	add	PASS	Expected ExitCode: 246	 Actual ExitCode: 246
+12 
+65	addu	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+13 
+66	and	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+16 
+67	multu	PASS	Expected ExitCode: 254	 Actual ExitCode: 254
+12 
+68	or	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+11 
+69	slt	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+13 
+70	sltu	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+10 
+71	sll	PASS	Expected ExitCode: 128	 Actual ExitCode: 128
+11 
+72	srl	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+13 
+73	sub	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+6 
+74	sub	PASS	Expected ExitCode: 246	 Actual ExitCode: 246
+15 
+75	subu	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+16 
+76	div	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+12 
+77	sra	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+14 
+78	mult	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+16 
+79	multu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+80	Hi	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+81	sllv	PASS	Expected ExitCode: 2	 Actual ExitCode: 2
+13 
+82	srav	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+13 
+83	srlv	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+196614 
+84	j	PASS	Expected ExitCode: 246	 Actual ExitCode: 246
+251 
+85	stack	PASS	Expected ExitCode: 128	 Actual ExitCode: 128
+15 
+86	lwsw	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+20 
+87	char	PASS	Expected ExitCode: 72	 Actual ExitCode: 72
+11 
+88	stress	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+32 
+89	stress	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+85 
+90	calc	PASS	Expected ExitCode: 203	 Actual ExitCode: 203
+2430 
+91	sort	PASS	Expected ExitCode: 5	 Actual ExitCode: 5
+28 
+92	stress	PASS	Expected ExitCode: 5	 Actual ExitCode: 5
+32 
+93	stress	PASS	Expected ExitCode: 7	 Actual ExitCode: 7
+22 
+94	stress	PASS	Expected ExitCode: 10	 Actual ExitCode: 10
+29 
+95	stress	PASS	Expected ExitCode: 2	 Actual ExitCode: 2
+2257 
+96	sort	PASS	Expected ExitCode: 98	 Actual ExitCode: 98
+1583 
+97	charOp	PASS	Expected ExitCode: 5	 Actual ExitCode: 5
+16 
+98	jalr	PASS	Expected ExitCode: 5	 Actual ExitCode: 5
+1598 
+99	quiksrt	PASS	Expected ExitCode: 211	 Actual ExitCode: 211
+1943 
+100	fibonci	PASS	Expected ExitCode: 21	 Actual ExitCode: 21
+16 
+101	multu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+16 
+102	lwl	PASS	Expected ExitCode: 33	 Actual ExitCode: 33
+32 
+103	stress	PASS	Expected ExitCode: 3	 Actual ExitCode: 3
+11 
+104	add	PASS	Expected ExitCode: 8	 Actual ExitCode: 8
+15 
+105	add	PASS	Expected ExitCode: 254	 Actual ExitCode: 254
+4 
+106	add	PASS	Expected ExitCode: 246	 Actual ExitCode: 246
+15 
+107	addu	PASS	Expected ExitCode: 254	 Actual ExitCode: 254
+11 
+108	addu	PASS	Expected ExitCode: 8	 Actual ExitCode: 8
+13 
+109	and	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+13 
+110	and	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+20 
+111	div	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+17 
+112	div	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+17 
+113	div	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+19 
+114	div	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+20 
+115	div	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+17 
+116	div	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+17 
+117	div	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+17 
+118	div	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+14 
+119	divu	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+14 
+120	divu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+121	divu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+122	divu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+1 
+124	jr	PASS	Expected ExitCode: 245	 Actual ExitCode: 245
+14 
+125	mult	PASS	Expected ExitCode: 253	 Actual ExitCode: 253
+17 
+126	mult	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+127	mult	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+12 
+128	mult	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+12 
+129	mult	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+16 
+130	mult	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+16 
+131	mult	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+132	or	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+11 
+133	or	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+11 
+134	or	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+11 
+135	or	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+136	sll	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+10 
+137	sll	PASS	Expected ExitCode: 4	 Actual ExitCode: 4
+11 
+138	sll	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+12 
+139	sllv	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+11 
+140	sllv	PASS	Expected ExitCode: 8	 Actual ExitCode: 8
+12 
+141	srlv	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+12 
+142	slt	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+12 
+143	slt	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+11 
+144	slt	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+12 
+145	sltu	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+12 
+146	sltu	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+11 
+147	sltu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+12 
+148	sltu	PASS	Expected ExitCode: 0	 Actual ExitCode: 0
+10 
+149	sra	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+12 
+150	sra	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+12 
+151	srav	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+10 
+152	srl	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+10 
+153	srl	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+10 
+154	srl	PASS	Expected ExitCode: 2	 Actual ExitCode: 2
+11 
+155	sub	PASS	Expected ExitCode: 255	 Actual ExitCode: 255
+11 
+156	sub	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+5 
+157	sub	PASS	Expected ExitCode: 246	 Actual ExitCode: 246
+13 
+158	sub	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+15 
+159	subu	PASS	Expected ExitCode: 2	 Actual ExitCode: 2
+13 
+160	subu	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+161	lwl	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+162	lwl	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+16 
+163	jalr	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+13 
+164	sh	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+14 
+165	sh	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+2 
+166	sh	PASS	Expected ExitCode: 245	 Actual ExitCode: 245
+14 
+167	lwr	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
+13 
+168	lwr	PASS	Expected ExitCode: 1	 Actual ExitCode: 1
