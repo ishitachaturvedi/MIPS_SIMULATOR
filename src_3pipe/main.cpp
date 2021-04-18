@@ -103,8 +103,8 @@ int main(int argc, char* argv[]){
 				instrMULDIV = NOP;
 
 			} else {
-				instrMEM = instr;
-				instrALU = NOP;
+				instrMEM = NOP;
+				instrALU = instr;
 				instrMULDIV = NOP;				
 			}
 			// if is_load or is_store, send down pipe2
