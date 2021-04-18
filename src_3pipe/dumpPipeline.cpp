@@ -1,4 +1,5 @@
 #include "dumpPipeline.hpp"
+#include <iostream>
 
 static void handleOpZeroInst(uint32_t instr, std::ostream & out_stream);
 static void printInstr(uint32_t curInst, std::ostream & pipeState);
@@ -12,6 +13,11 @@ static void handleJInst(uint32_t instr, std::ostream & out_stream);
 #define ALU_PIPE 1
 #define MEM_PIPE 2
 #define MULDIV_PIPE 3
+
+#define NOP 0x00000000
+
+using namespace std;
+
 //Printing code...
 enum OP_IDS
 {
@@ -78,11 +84,23 @@ enum FUN_IDS
 };
 
 
-void checkForStall(uint32_t instr, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling)
+void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling)
 {
+    // Get current instruction in decode
+    uint32_t instr_D = NOP;
+
+    if (pipeStateALU.idInstr != NOP) {
+        instr_D = pipeStateALU.idInstr; 
+    } else if (pipeStateMEM.idInstr != NOP) {
+        instr_D = pipeStateMEM.idInstr; 
+    } else if (pipeStateMULDIV.idInstr != NOP) {
+        instr_D = pipeStateMULDIV.idInstr; 
+    }
+
+
     // Decode current instruction
     Decode id;
-    decode_inst(instr, id);
+    decode_inst(instr_D, id);
 
     // Decode Mem instructions;
     Decode ex1MEM;
@@ -106,7 +124,18 @@ void checkForStall(uint32_t instr, PipeState &pipeStateALU, PipeState &pipeState
     )
     {
         stalling = 1;
+        
     }
+
+
+    // DEBUG CODE - NIMRA
+    /*
+    std::cout << "Cycle: " << pipeStateALU.cycle << " ------- Stalling = " << stalling << endl;
+    std::cout  << "--------------------------------------------------------------------------" << endl;
+    std::cout  << "id.rs = " << id.rs <<  ", id.rd = " << id.rd << ", ex1MEM.rt = " << ex1MEM.rt << ", pipeStateMEM.ex1_isload = " << pipeStateMEM.ex1_isload << endl;
+    std::cout  << "--------------------------------------------------------------------------" << endl;
+    */
+
 
     // if ex1, ex2, ex3 are mulDiv inst which is being waited on, we stall
     if(
@@ -751,16 +780,10 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
         pipe_out << "|";
         printInstr(stateALU.ex1Instr, pipe_out);
         pipe_out << "|";
-        printInstr(stateALU.ex2Instr, pipe_out);
-        pipe_out << "|";
-        printInstr(stateALU.ex3Instr, pipe_out);
-        pipe_out << "|";
-        printInstr(stateALU.ex4Instr, pipe_out);
-        pipe_out << "|";
         printInstr(stateALU.wbInstr, pipe_out);
         pipe_out << "|" << endl;
         pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;   
-        pipe_out << "MEM Pipe: " << endl;
+        pipe_out << "MEM Pipe: " << endl; 
         pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
         pipe_out << "|";
         printInstr(stateMEM.ifInstr, pipe_out);
@@ -770,10 +793,6 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
         printInstr(stateMEM.ex1Instr, pipe_out);
         pipe_out << "|";
         printInstr(stateMEM.ex2Instr, pipe_out);
-        pipe_out << "|";
-        printInstr(stateMEM.ex3Instr, pipe_out);
-        pipe_out << "|";
-        printInstr(stateMEM.ex4Instr, pipe_out);
         pipe_out << "|";
         printInstr(stateMEM.wbInstr, pipe_out);
         pipe_out << "|" << endl;

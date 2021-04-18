@@ -52,8 +52,7 @@ int main(int argc, char* argv[]){
 		uint32_t instrALU;
 		uint32_t instrMEM;
 		uint32_t instrMULDIV;
-
-
+	
 
 		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage
 
@@ -89,24 +88,26 @@ int main(int argc, char* argv[]){
 				r_type(mips_state,executed,decode,is_mulDiv);
 				i_type(mips_state,executed,decode,is_load, is_store);
 				j_type(mips_state,executed,decode);
+
+				if (is_mulDiv) {
+					instrMULDIV = instr;
+					instrALU = NOP;
+					instrMEM = NOP;
+
+				} else if (is_load || is_store) {
+					instrMEM = instr;
+					instrALU = NOP;
+					instrMULDIV = NOP;
+
+				} else {
+					instrMEM = NOP;
+					instrALU = instr;
+					instrMULDIV = NOP;				
+				}
 			}
 
 			// check if is_mulDiv, send down pipe3 and send noop down pipe 1 and 2
-			if (is_mulDiv) {
-				instrMULDIV = instr;
-				instrALU = NOP;
-				instrMEM = NOP;
 
-			} else if (is_load || is_store) {
-				instrMEM = instr;
-				instrALU = NOP;
-				instrMULDIV = NOP;
-
-			} else {
-				instrMEM = NOP;
-				instrALU = instr;
-				instrMULDIV = NOP;				
-			}
 			// if is_load or is_store, send down pipe2
 			// else send down pipe 1
 
@@ -114,15 +115,20 @@ int main(int argc, char* argv[]){
 			moveOneCycle(mips_state, pipeStateMEM, pipeState_NextMEM, executed, CurCycle, instrMEM, stalling, is_load, is_store, is_mulDiv);
 			moveOneCycle(mips_state, pipeStateMULDIV, pipeState_NextMULDIV, executed, CurCycle, instrMULDIV, stalling, is_load, is_store, is_mulDiv);
 
+
 			if(stalling == 1)
 			{
 				stalling = 0;
 			}
 
-			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV);
+			
 
 			// compare in all three pipestates
-			checkForStall(instr, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
+			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
+
+
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV);	
+
 
 			CurCycle = CurCycle + 1;
 
