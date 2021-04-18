@@ -85,7 +85,25 @@ bin/mips_simulator_long : $(LONG_SIM_DEP)
 # In order to comply with spec
 simulator_long : bin/mips_simulator_long
 
+
 ###################################################
+## 3-pipe (ALU/MEM/MULDIV) bypass Simulator
+
+3PIPE_IDIR = include_3pipe
+3PIPE_SIM_DEP = src_3pipe/main.cpp src_3pipe/setUp.cpp src_3pipe/R_functions.cpp src_3pipe/error.cpp src_3pipe/J_functions.cpp src_3pipe/I_functions.cpp src_3pipe/Decode.cpp src_3pipe/dumpPipeline.cpp
+3PIPE_G++_FLAGS = -Wall -std=c++11 -O1 -I $(3PIPE_IDIR)
+
+# Build the simulation binary
+bin/mips_simulator_3pipe : $(3PIPE_SIM_DEP)
+	mkdir -p bin
+	g++ $(3PIPE_G++_FLAGS) $(3PIPE_SIM_DEP) -o bin/mips_simulator_3pipe
+
+
+# In order to comply with spec
+simulator_3pipe : bin/mips_simulator_3pipe
+
+###################################################
+
 ## Testbench
 
 TIDIR = testbench/include

@@ -9,6 +9,9 @@ static void handleJInst(uint32_t instr, std::ostream & out_stream);
 
 #define NUM_REGS 32
 
+#define ALU_PIPE 1
+#define MEM_PIPE 2
+#define MULDIV_PIPE 3
 //Printing code...
 enum OP_IDS
 {
@@ -75,23 +78,31 @@ enum FUN_IDS
 };
 
 
-void checkForStall(PipeState &pipeState, int &stalling)
+void checkForStall(uint32_t instr, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling)
 {
+    // Decode current instruction
     Decode id;
-    Decode ex1;
-    Decode ex2;
-    Decode ex3;
-    Decode ex4;
-    //Decode mem;
-    decode_inst(pipeState.idInstr, id);
-    decode_inst(pipeState.ex1Instr, ex1);
-    decode_inst(pipeState.ex2Instr, ex2);
-    decode_inst(pipeState.ex3Instr, ex3);
-    decode_inst(pipeState.ex4Instr, ex4);
+    decode_inst(instr, id);
+
+    // Decode Mem instructions;
+    Decode ex1MEM;
+    Decode ex2MEM;
+    decode_inst(pipeStateMEM.ex1Instr, ex1MEM);
+    decode_inst(pipeStateMEM.ex2Instr, ex2MEM);
+
+    // Decode MUL DIV instructions;
+    Decode ex1MD;
+    Decode ex2MD;
+    Decode ex3MD;
+    Decode ex4MD;
+    decode_inst(pipeStateMULDIV.ex1Instr, ex1MD);
+    decode_inst(pipeStateMULDIV.ex2Instr, ex2MD);
+    decode_inst(pipeStateMULDIV.ex3Instr, ex3MD);
+    decode_inst(pipeStateMULDIV.ex4Instr, ex4MD);
 
     // if ex1 are load inst which is being waited on, we stall
     if(
-        ((id.rs == ex1.rt || id.rd == ex1.rt) && ex1.rt != 0x0 && pipeState.ex1_isload && !(pipeState.ex1Instr == pipeState.ex2Instr))
+        ((id.rs == ex1MEM.rt || id.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr))
     )
     {
         stalling = 1;
@@ -99,127 +110,254 @@ void checkForStall(PipeState &pipeState, int &stalling)
 
     // if ex1, ex2, ex3 are mulDiv inst which is being waited on, we stall
     if(
-        (((id.rs == ex1.rd || id.rt == ex1.rd) && ex1.rd != 0x0 && pipeState.ex1_isMulDiv && !(pipeState.ex1Instr == pipeState.ex3Instr))
-        || ((id.rs == ex2.rd || id.rt == ex2.rd) && ex2.rd != 0x0 && pipeState.ex2_isMulDiv && !(pipeState.ex2Instr == pipeState.ex3Instr))
-        || ((id.rs == ex3.rd || id.rt == ex3.rd) && ex3.rd != 0x0 && pipeState.ex3_isMulDiv && !(pipeState.ex3Instr == pipeState.ex4Instr)))
+        (((id.rs == ex1MD.rd || id.rt == ex1MD.rd) && ex1MD.rd != 0x0 && pipeStateMULDIV.ex1_isMulDiv && !(pipeStateMULDIV.ex1Instr == pipeStateMULDIV.ex3Instr))
+        || ((id.rs == ex2MD.rd || id.rt == ex2MD.rd) && ex2MD.rd != 0x0 && pipeStateMULDIV.ex2_isMulDiv && !(pipeStateMULDIV.ex2Instr == pipeStateMULDIV.ex3Instr))
+        || ((id.rs == ex3MD.rd || id.rt == ex3MD.rd) && ex3MD.rd != 0x0 && pipeStateMULDIV.ex3_isMulDiv && !(pipeStateMULDIV.ex3Instr == pipeStateMULDIV.ex4Instr)))
     )
     {
         stalling = 1;
     }
 }
 
+
 //move pipeline one cycle forward
-void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, int stalling, bool is_load, bool is_mulDiv)
+void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, bool is_store, bool is_mulDiv)
 {
     std::flush(std::cout);
     if(stalling != 1)
-    {    
-        //There is no memStr state it is basically ex2, ex3 and ex4 are dummy states
-        // Instruction shifting
-        pipeState.cycle = CurCycle;
-        pipeState.ifInstr = mips_state.ram[mips_state.pc];
-        pipeState.idInstr = pipeState_Next.idInstr;
-        pipeState.ex1Instr = pipeState_Next.ex1Instr;
-        pipeState.ex2Instr = pipeState_Next.ex2Instr;
-        pipeState.ex3Instr = pipeState_Next.ex3Instr;
-        pipeState.ex4Instr = pipeState_Next.ex4Instr;
-        pipeState.wbInstr = pipeState_Next.wbInstr;
+    {   
+        // if ALU_PIPE then
+        if (pipeState.pipe_type == ALU_PIPE) {
 
-        pipeState_Next.wbInstr = pipeState_Next.ex4Instr;
-        pipeState_Next.ex4Instr = pipeState_Next.ex3Instr;
-        pipeState_Next.ex3Instr = pipeState_Next.ex2Instr;
-        pipeState_Next.ex2Instr = pipeState_Next.ex1Instr;
-        pipeState_Next.ex1Instr = pipeState_Next.idInstr;
-        pipeState_Next.idInstr = pipeState.ifInstr;
+         // Instruction shifting
+            pipeState.cycle = CurCycle;
+            pipeState.ifInstr = instr;
+            pipeState.idInstr = pipeState_Next.idInstr;
+            pipeState.ex1Instr = pipeState_Next.ex1Instr;
+            pipeState.wbInstr = pipeState_Next.wbInstr;
 
-        //PC setting
-        pipeState.ifPC = mips_state.pc;
-        pipeState.idPC = pipeState_Next.idPC;
-        pipeState.ex1PC = pipeState_Next.ex1PC;
-        pipeState.ex2PC = pipeState_Next.ex2PC;
-        pipeState.ex3PC = pipeState_Next.ex3PC;
-        pipeState.ex4PC = pipeState_Next.ex4PC;
-        pipeState.wbPC = pipeState_Next.wbPC;
+            pipeState_Next.wbInstr = pipeState_Next.ex1Instr;
+            pipeState_Next.ex1Instr = pipeState_Next.idInstr;
+            pipeState_Next.idInstr = pipeState.ifInstr;
+
+
+            //PC setting
+            pipeState.ifPC = mips_state.pc;
+            pipeState.idPC = pipeState_Next.idPC;
+            pipeState.ex1PC = pipeState_Next.ex1PC;
+            pipeState.wbPC = pipeState_Next.wbPC;
+            
+            pipeState_Next.wbPC = pipeState_Next.ex1PC;
+            pipeState_Next.ex1PC = pipeState_Next.idPC;
+            pipeState_Next.idPC = pipeState.ifPC;
+
+            //reg setting
+            pipeState.ifreg = mips_state.reg;
+            pipeState.idreg = pipeState_Next.idreg;
+            pipeState.ex1reg = pipeState_Next.ex1reg;
+            pipeState.wbreg = pipeState_Next.wbreg;
+            
+            pipeState_Next.wbreg = pipeState_Next.ex1reg;
+            pipeState_Next.ex1reg = pipeState_Next.idreg;
+            pipeState_Next.idreg = pipeState.ifreg;
+
+            //execute setting
+
+            pipeState.IF = executed;
+            pipeState.id = pipeState_Next.id;
+            pipeState.ex1 = pipeState_Next.ex1;
+            pipeState.wb = pipeState_Next.wb;
+
+            pipeState_Next.wb = pipeState_Next.ex1;
+            pipeState_Next.ex1 = pipeState_Next.id;
+            pipeState_Next.id = pipeState.IF;
+
+    
+
+        } else if (pipeState.pipe_type == MEM_PIPE) {
+
+            // Instruction shifting
+            pipeState.cycle = CurCycle;
+            pipeState.ifInstr = instr;
+            pipeState.idInstr = pipeState_Next.idInstr;
+            pipeState.ex1Instr = pipeState_Next.ex1Instr;
+            pipeState.ex2Instr = pipeState_Next.ex2Instr;
+            pipeState.wbInstr = pipeState_Next.wbInstr;
+
+            pipeState_Next.wbInstr = pipeState_Next.ex2Instr;
+            pipeState_Next.ex2Instr = pipeState_Next.ex1Instr;
+            pipeState_Next.ex1Instr = pipeState_Next.idInstr;
+            pipeState_Next.idInstr = pipeState.ifInstr;
+
+            //PC setting
+            pipeState.ifPC = mips_state.pc;
+            pipeState.idPC = pipeState_Next.idPC;
+            pipeState.ex1PC = pipeState_Next.ex1PC;
+            pipeState.ex2PC = pipeState_Next.ex2PC;
+            pipeState.wbPC = pipeState_Next.wbPC;
+            
+            pipeState_Next.wbPC = pipeState_Next.ex2PC;
+            pipeState_Next.ex2PC = pipeState_Next.ex1PC;
+            pipeState_Next.ex1PC = pipeState_Next.idPC;
+            pipeState_Next.idPC = pipeState.ifPC;
+
+            //reg setting
+            pipeState.ifreg = mips_state.reg;
+            pipeState.idreg = pipeState_Next.idreg;
+            pipeState.ex1reg = pipeState_Next.ex1reg;
+            pipeState.ex2reg = pipeState_Next.ex2reg;
+            pipeState.wbreg = pipeState_Next.wbreg;
+            
+            pipeState_Next.wbreg = pipeState_Next.ex2reg;
+            pipeState_Next.ex2reg = pipeState_Next.ex1reg;
+            pipeState_Next.ex1reg = pipeState_Next.idreg;
+            pipeState_Next.idreg = pipeState.ifreg;
+
+            //execute setting
+
+            pipeState.IF = executed;
+            pipeState.id = pipeState_Next.id;
+            pipeState.ex1 = pipeState_Next.ex1;
+            pipeState.ex2 = pipeState_Next.ex2;
+            pipeState.wb = pipeState_Next.wb;
+
+            pipeState_Next.wb = pipeState_Next.ex2;
+            pipeState_Next.ex2 = pipeState_Next.ex1;
+            pipeState_Next.ex1 = pipeState_Next.id;
+            pipeState_Next.id = pipeState.IF;
+
+            //is_load
+            pipeState.if_isload = is_load;
+            pipeState.id_isload = pipeState_Next.id_isload;
+            pipeState.ex1_isload = pipeState_Next.ex1_isload;
+            pipeState.ex2_isload = pipeState_Next.ex2_isload;
+            
+            pipeState_Next.ex2_isload = pipeState_Next.ex1_isload;
+            pipeState_Next.ex1_isload = pipeState_Next.id_isload;
+            pipeState_Next.id_isload = pipeState.if_isload;
+
+    
+
+        } else if (pipeState.pipe_type == MULDIV_PIPE) {
+
         
-        pipeState_Next.wbPC = pipeState_Next.ex4PC;
-        pipeState_Next.ex4PC = pipeState_Next.ex3PC;
-        pipeState_Next.ex3PC = pipeState_Next.ex2PC;
-        pipeState_Next.ex2PC = pipeState_Next.ex1PC;
-        pipeState_Next.ex1PC = pipeState_Next.idPC;
-        pipeState_Next.idPC = pipeState.ifPC;
+            // Instruction shifting
+            pipeState.cycle = CurCycle;
+            pipeState.ifInstr = instr;
+            pipeState.idInstr = pipeState_Next.idInstr;
+            pipeState.ex1Instr = pipeState_Next.ex1Instr;
+            pipeState.ex2Instr = pipeState_Next.ex2Instr;
+            pipeState.ex3Instr = pipeState_Next.ex3Instr;
+            pipeState.ex4Instr = pipeState_Next.ex4Instr;
+            pipeState.wbInstr = pipeState_Next.wbInstr;
 
-        //reg setting
-        pipeState.ifreg = mips_state.reg;
-        pipeState.idreg = pipeState_Next.idreg;
-        pipeState.ex1reg = pipeState_Next.ex1reg;
-        pipeState.ex2reg = pipeState_Next.ex2reg;
-        pipeState.ex3reg = pipeState_Next.ex3reg;
-        pipeState.ex4reg = pipeState_Next.ex4reg;
-        pipeState.wbreg = pipeState_Next.wbreg;
-        
-        pipeState_Next.wbreg = pipeState_Next.ex4reg;
-        pipeState_Next.ex4reg = pipeState_Next.ex3reg;
-        pipeState_Next.ex3reg = pipeState_Next.ex2reg;
-        pipeState_Next.ex2reg = pipeState_Next.ex1reg;
-        pipeState_Next.ex1reg = pipeState_Next.idreg;
-        pipeState_Next.idreg = pipeState.ifreg;
+            pipeState_Next.wbInstr = pipeState_Next.ex4Instr;
+            pipeState_Next.ex4Instr = pipeState_Next.ex3Instr;
+            pipeState_Next.ex3Instr = pipeState_Next.ex2Instr;
+            pipeState_Next.ex2Instr = pipeState_Next.ex1Instr;
+            pipeState_Next.ex1Instr = pipeState_Next.idInstr;
+            pipeState_Next.idInstr = pipeState.ifInstr;
 
-        //execute setting
+            //PC setting
+            pipeState.ifPC = mips_state.pc;
+            pipeState.idPC = pipeState_Next.idPC;
+            pipeState.ex1PC = pipeState_Next.ex1PC;
+            pipeState.ex2PC = pipeState_Next.ex2PC;
+            pipeState.ex3PC = pipeState_Next.ex3PC;
+            pipeState.ex4PC = pipeState_Next.ex4PC;
+            pipeState.wbPC = pipeState_Next.wbPC;
+            
+            pipeState_Next.wbPC = pipeState_Next.ex4PC;
+            pipeState_Next.ex4PC = pipeState_Next.ex3PC;
+            pipeState_Next.ex3PC = pipeState_Next.ex2PC;
+            pipeState_Next.ex2PC = pipeState_Next.ex1PC;
+            pipeState_Next.ex1PC = pipeState_Next.idPC;
+            pipeState_Next.idPC = pipeState.ifPC;
 
-        pipeState.IF = executed;
-        pipeState.id = pipeState_Next.id;
-        pipeState.ex1 = pipeState_Next.ex1;
-        pipeState.ex2 = pipeState_Next.ex2;
-        pipeState.ex3 = pipeState_Next.ex3;
-        pipeState.ex4 = pipeState_Next.ex4;
-        pipeState.wb = pipeState_Next.wb;
+            //reg setting
+            pipeState.ifreg = mips_state.reg;
+            pipeState.idreg = pipeState_Next.idreg;
+            pipeState.ex1reg = pipeState_Next.ex1reg;
+            pipeState.ex2reg = pipeState_Next.ex2reg;
+            pipeState.ex3reg = pipeState_Next.ex3reg;
+            pipeState.ex4reg = pipeState_Next.ex4reg;
+            pipeState.wbreg = pipeState_Next.wbreg;
+            
+            pipeState_Next.wbreg = pipeState_Next.ex4reg;
+            pipeState_Next.ex4reg = pipeState_Next.ex3reg;
+            pipeState_Next.ex3reg = pipeState_Next.ex2reg;
+            pipeState_Next.ex2reg = pipeState_Next.ex1reg;
+            pipeState_Next.ex1reg = pipeState_Next.idreg;
+            pipeState_Next.idreg = pipeState.ifreg;
 
-        pipeState_Next.wb = pipeState_Next.ex4;
-        pipeState_Next.ex4 = pipeState_Next.ex3;
-        pipeState_Next.ex3 = pipeState_Next.ex2;
-        pipeState_Next.ex2 = pipeState_Next.ex1;
-        pipeState_Next.ex1 = pipeState_Next.id;
-        pipeState_Next.id = pipeState.IF;
+            //execute setting
 
-        //is_load
-        pipeState.if_isload = is_load;
-        pipeState.id_isload = pipeState_Next.id_isload;
-        pipeState.ex1_isload = pipeState_Next.ex1_isload;
-        pipeState.ex2_isload = pipeState_Next.ex2_isload;
-        pipeState.ex3_isload = pipeState_Next.ex3_isload;
-        pipeState.ex4_isload = pipeState_Next.ex4_isload;
+            pipeState.IF = executed;
+            pipeState.id = pipeState_Next.id;
+            pipeState.ex1 = pipeState_Next.ex1;
+            pipeState.ex2 = pipeState_Next.ex2;
+            pipeState.ex3 = pipeState_Next.ex3;
+            pipeState.ex4 = pipeState_Next.ex4;
+            pipeState.wb = pipeState_Next.wb;
 
-        pipeState_Next.ex4_isload = pipeState_Next.ex3_isload;
-        pipeState_Next.ex3_isload = pipeState_Next.ex2_isload;
-        pipeState_Next.ex2_isload = pipeState_Next.ex1_isload;
-        pipeState_Next.ex1_isload = pipeState_Next.id_isload;
-        pipeState_Next.id_isload = pipeState.if_isload;
+            pipeState_Next.wb = pipeState_Next.ex4;
+            pipeState_Next.ex4 = pipeState_Next.ex3;
+            pipeState_Next.ex3 = pipeState_Next.ex2;
+            pipeState_Next.ex2 = pipeState_Next.ex1;
+            pipeState_Next.ex1 = pipeState_Next.id;
+            pipeState_Next.id = pipeState.IF;
 
-        //is_mulDiv
-        pipeState.if_isMulDiv = is_mulDiv;
-        pipeState.id_isMulDiv = pipeState_Next.id_isMulDiv;
-        pipeState.ex1_isMulDiv = pipeState_Next.ex1_isMulDiv;
-        pipeState.ex2_isMulDiv = pipeState_Next.ex2_isMulDiv;
-        pipeState.ex3_isMulDiv = pipeState_Next.ex3_isMulDiv;
+            //is_mulDiv
+            pipeState.if_isMulDiv = is_mulDiv;
+            pipeState.id_isMulDiv = pipeState_Next.id_isMulDiv;
+            pipeState.ex1_isMulDiv = pipeState_Next.ex1_isMulDiv;
+            pipeState.ex2_isMulDiv = pipeState_Next.ex2_isMulDiv;
+            pipeState.ex3_isMulDiv = pipeState_Next.ex3_isMulDiv;
 
-        pipeState_Next.ex3_isMulDiv = pipeState_Next.ex2_isMulDiv;
-        pipeState_Next.ex2_isMulDiv = pipeState_Next.ex1_isMulDiv;
-        pipeState_Next.ex1_isMulDiv = pipeState_Next.id_isMulDiv;
-        pipeState_Next.id_isMulDiv = pipeState.if_isMulDiv;
+            pipeState_Next.ex3_isMulDiv = pipeState_Next.ex2_isMulDiv;
+            pipeState_Next.ex2_isMulDiv = pipeState_Next.ex1_isMulDiv;
+            pipeState_Next.ex1_isMulDiv = pipeState_Next.id_isMulDiv;
+            pipeState_Next.id_isMulDiv = pipeState.if_isMulDiv;
+
+        } else {
+            cerr << "Invalid Pipe Type. Choose between 1: ALU, 2: MEM, 3: MULDIV." << endl;
+        }
 
     }
 
     if(stalling == 1)
     {
-        pipeState.cycle = CurCycle;
-        pipeState.wbInstr = pipeState.ex4Instr;
-        pipeState.ex4Instr = pipeState.ex3Instr;
-        pipeState.ex3Instr = pipeState.ex2Instr;
-        pipeState.ex2Instr = pipeState.ex1Instr;
+        if (pipeState.pipe_type == ALU_PIPE) {
 
-        pipeState_Next.wbInstr =  pipeState.ex4Instr;
-        pipeState_Next.ex4Instr =  pipeState.ex3Instr;
-        pipeState_Next.ex3Instr = pipeState.ex2Instr;
+            pipeState.cycle = CurCycle;
+            pipeState.wbInstr = pipeState.ex1Instr;
+
+            pipeState_Next.wbInstr =  pipeState.ex1Instr;
+
+        } else if (pipeState.pipe_type == MEM_PIPE) {
+
+            pipeState.cycle = CurCycle;
+            pipeState.wbInstr = pipeState.ex2Instr;
+            pipeState.ex2Instr = pipeState.ex1Instr;
+
+            pipeState_Next.wbInstr =  pipeState.ex2Instr;
+
+        } else if (pipeState.pipe_type == MULDIV_PIPE) {
+
+            pipeState.cycle = CurCycle;
+            pipeState.wbInstr = pipeState.ex4Instr;
+            pipeState.ex4Instr = pipeState.ex3Instr;
+            pipeState.ex3Instr = pipeState.ex2Instr;
+            pipeState.ex2Instr = pipeState.ex1Instr;
+
+            pipeState_Next.wbInstr =  pipeState.ex4Instr;
+            pipeState_Next.ex4Instr =  pipeState.ex3Instr;
+            pipeState_Next.ex3Instr = pipeState.ex2Instr;
+            
+        } else {
+            cerr << "Invalid Pipe Type. Choose between 1: ALU, 2: MEM, 3: MULDIV." << endl;
+        }
+
     }
 }
 
