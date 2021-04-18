@@ -731,33 +731,72 @@ static void printInstr(uint32_t curInst, ostream & pipeState)
     }
 }
 
-void dumpPipeState(PipeState & state)
+void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV)
 {
 
     ofstream pipe_out("pipe_state.out", ios::app);
 
     if(pipe_out)
     {
-        pipe_out << "Cycle: " << state.cycle << endl;
+
+        pipe_out << "####################################################" << endl;
+        pipe_out << "Cycle: " << stateALU.cycle << endl;
+        pipe_out << "####################################################" << endl;
+        pipe_out << "ALU Pipe: " << endl;
         pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
         pipe_out << "|";
-        printInstr(state.ifInstr, pipe_out);
+        printInstr(stateALU.ifInstr, pipe_out);
         pipe_out << "|";
-        printInstr(state.idInstr, pipe_out);
+        printInstr(stateALU.idInstr, pipe_out);
         pipe_out << "|";
-        printInstr(state.ex1Instr, pipe_out);
+        printInstr(stateALU.ex1Instr, pipe_out);
         pipe_out << "|";
-        printInstr(state.ex2Instr, pipe_out);
+        printInstr(stateALU.ex2Instr, pipe_out);
         pipe_out << "|";
-        printInstr(state.ex3Instr, pipe_out);
+        printInstr(stateALU.ex3Instr, pipe_out);
         pipe_out << "|";
-        printInstr(state.ex4Instr, pipe_out);
+        printInstr(stateALU.ex4Instr, pipe_out);
         pipe_out << "|";
-        printInstr(state.memInstr, pipe_out);
+        printInstr(stateALU.wbInstr, pipe_out);
+        pipe_out << "|" << endl;
+        pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;   
+        pipe_out << "MEM Pipe: " << endl;
+        pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
         pipe_out << "|";
-        printInstr(state.wbInstr, pipe_out);
+        printInstr(stateMEM.ifInstr, pipe_out);
         pipe_out << "|";
+        printInstr(stateMEM.idInstr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMEM.ex1Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMEM.ex2Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMEM.ex3Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMEM.ex4Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMEM.wbInstr, pipe_out);
+        pipe_out << "|" << endl;
         pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
+        pipe_out << "MUL/DIV Pipe: " << endl;
+        pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
+        pipe_out << "|";
+        printInstr(stateMULDIV.ifInstr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMULDIV.idInstr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMULDIV.ex1Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMULDIV.ex2Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMULDIV.ex3Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMULDIV.ex4Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMULDIV.wbInstr, pipe_out);
+        pipe_out << "|" << endl;
+        pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
+   
     }
     else
     {
