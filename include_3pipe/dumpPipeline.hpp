@@ -129,7 +129,7 @@ struct PipeState_Next
     bool ex3_isMulDiv;
 };
 
-void dumpPipeState(PipeState & state);
+void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV);
 void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, bool is_store, bool is_mulDiv);
 void initPipeline(PipeState_Next &pipeState_Next);
 void checkForStall(uint32_t instr, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling);
