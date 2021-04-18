@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
 		ofs.close();
 
 		string fileName(argv[1]);
-		int32_t tempNPC;
+		int32_t tempNPC = 0;
 		bool executed;				//this flag is turned on when an instruction of one of the 3 types has been executed
 		State mips_state;
 
@@ -49,9 +49,9 @@ int main(int argc, char* argv[]){
 
 		Decode decode;
 
-		uint32_t instrALU;
-		uint32_t instrMEM;
-		uint32_t instrMULDIV;
+		uint32_t instrALU = NOP;
+		uint32_t instrMEM = NOP;
+		uint32_t instrMULDIV = NOP;
 	
 
 		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage

@@ -615,8 +615,6 @@ void dumpPipeState(PipeState & state)
         pipe_out << "|";
         printInstr(state.ex4Instr, pipe_out);
         pipe_out << "|";
-        printInstr(state.memInstr, pipe_out);
-        pipe_out << "|";
         printInstr(state.wbInstr, pipe_out);
         pipe_out << "|";
         pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
