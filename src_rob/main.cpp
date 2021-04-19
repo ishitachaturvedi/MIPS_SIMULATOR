@@ -139,22 +139,21 @@ int main(int argc, char* argv[]){
 			}
 
 			
-			/*
+			
 			// ROB Fill
-			if (pipeStateALU.wbInstr != NOP) {
+			if (pipeStateALU.wb_isval) {
 				robState.pending[pipeStateALU.rob_fill_slot_wb] = false;
 				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from ALU pipe: " << endl;
 			}
-			if (pipeStateMEM.wbInstr != NOP) {
+			if (pipeStateMEM.wb_isval) {
 				robState.pending[pipeStateMEM.rob_fill_slot_wb] = false;
 				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from MEM pipe:"  << endl;
 			}
-			if (pipeStateMULDIV.wbInstr != NOP) {
+			if (pipeStateMULDIV.wb_isval) {
 				robState.pending[pipeStateMULDIV.rob_fill_slot_wb] = false;
 				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from MULDIV pipe: " << endl;
 			}
 
-			*/
 
 
 			// ROB Commit

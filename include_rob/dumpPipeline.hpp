@@ -29,7 +29,6 @@ struct PipeState
     uint32_t ex2Instr;
     uint32_t ex3Instr;
     uint32_t ex4Instr;
-    uint32_t memInstr;
     uint32_t wbInstr;
 
     //Push PC
@@ -39,7 +38,6 @@ struct PipeState
     uint32_t ex2PC;
     uint32_t ex3PC;
     uint32_t ex4PC;
-    uint32_t memPC;
     uint32_t wbPC;
 
     //Push Reg
@@ -49,7 +47,6 @@ struct PipeState
     std::vector<int32_t> ex2reg;
     std::vector<int32_t> ex3reg;
     std::vector<int32_t> ex4reg;
-    std::vector<int32_t> memreg;
     std::vector<int32_t> wbreg;
 
     //push execute
@@ -59,7 +56,6 @@ struct PipeState
     bool ex2;
     bool ex3;
     bool ex4;
-    bool mem;
     bool wb;
 
     //push load
@@ -86,6 +82,15 @@ struct PipeState
     uint32_t rob_fill_slot_ex4;
     uint32_t rob_fill_slot_wb;
 
+    // Instruction is valid - for ROB
+    bool if_isval;
+    bool id_isval;
+    bool ex1_isval;
+    bool ex2_isval;
+    bool ex3_isval;
+    bool ex4_isval;
+    bool wb_isval;
+
 };
 
 struct PipeState_Next
@@ -97,7 +102,6 @@ struct PipeState_Next
     uint32_t ex2Instr;
     uint32_t ex3Instr;
     uint32_t ex4Instr;
-    uint32_t memInstr;
     uint32_t wbInstr;
     
     //Push PC
@@ -106,7 +110,6 @@ struct PipeState_Next
     uint32_t ex2PC;
     uint32_t ex3PC;
     uint32_t ex4PC;
-    uint32_t memPC;
     uint32_t wbPC;
 
     //Push Reg
@@ -115,7 +118,6 @@ struct PipeState_Next
     std::vector<int32_t> ex2reg;
     std::vector<int32_t> ex3reg;
     std::vector<int32_t> ex4reg;
-    std::vector<int32_t> memreg;
     std::vector<int32_t> wbreg;
 
     //push execute
@@ -124,7 +126,6 @@ struct PipeState_Next
     bool ex2;
     bool ex3;
     bool ex4;
-    bool mem;
     bool wb;
 
     //push load
@@ -147,6 +148,15 @@ struct PipeState_Next
     uint32_t rob_fill_slot_ex3;
     uint32_t rob_fill_slot_ex4;
     uint32_t rob_fill_slot_wb;
+
+    // Instruction is valid - for ROB
+    bool if_isval;
+    bool id_isval;
+    bool ex1_isval;
+    bool ex2_isval;
+    bool ex3_isval;
+    bool ex4_isval;
+    bool wb_isval;
 };
 
 struct ROBState {

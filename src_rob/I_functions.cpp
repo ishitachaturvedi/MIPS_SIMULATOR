@@ -23,6 +23,7 @@ void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load, bo
 		// }
 
 		is_load = false;
+		is_store = false;
  
 		switch(decode.opcode){
 			case 0x00000008:
@@ -88,14 +89,17 @@ void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load, bo
 			case 0x00000028:
 				sb(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
+				is_store = true;
 				return;
 			case 0x00000029:
 				sh(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
+				is_store = true;
 				return;
 			case 0x0000002B:
 				sw(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
+				is_store = true;
 				return;
 			case 0x0000000A:
 				slti(mips_state, decode.rs, decode.rt, decode.SignExtImm);

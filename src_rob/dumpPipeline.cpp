@@ -210,6 +210,18 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
             pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex1;
             pipeState_Next.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_id;
             pipeState_Next.rob_fill_slot_id = pipeState.rob_fill_slot_if;
+
+
+            // iNSTRUCTION Valid
+            pipeState.if_isval = (instr != NOP);
+            pipeState.id_isval = pipeState_Next.id_isval;
+            pipeState.ex1_isval = pipeState_Next.ex1_isval;
+            pipeState.wb_isval = pipeState_Next.wb_isval;
+
+            pipeState_Next.wb_isval = pipeState_Next.ex1_isval;
+            pipeState_Next.ex1_isval = pipeState_Next.id_isval;
+            pipeState_Next.id_isval = pipeState.if_isval;
+
     
         } else if (pipeState.pipe_type == MEM_PIPE) {
 
@@ -284,6 +296,20 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
             pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
             pipeState_Next.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_id;
             pipeState_Next.rob_fill_slot_id = pipeState.rob_fill_slot_if;
+
+            // iNSTRUCTION Valid
+            pipeState.if_isval = (instr != NOP);
+            pipeState.id_isval = pipeState_Next.id_isval;
+            pipeState.ex1_isval = pipeState_Next.ex1_isval;
+            pipeState.ex2_isval = pipeState_Next.ex2_isval;
+            pipeState.wb_isval = pipeState_Next.wb_isval;
+
+            pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
+            pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
+            pipeState_Next.ex1_isval = pipeState_Next.id_isval;
+            pipeState_Next.id_isval = pipeState.if_isval;
+
+
 
         } else if (pipeState.pipe_type == MULDIV_PIPE) {
 
@@ -382,6 +408,24 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
             pipeState_Next.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_id;
             pipeState_Next.rob_fill_slot_id = pipeState.rob_fill_slot_if;
 
+
+
+            // iNSTRUCTION Valid
+            pipeState.if_isval = (instr != NOP);
+            pipeState.id_isval = pipeState_Next.id_isval;
+            pipeState.ex1_isval = pipeState_Next.ex1_isval;
+            pipeState.ex2_isval = pipeState_Next.ex2_isval;
+            pipeState.ex3_isval = pipeState_Next.ex3_isval;
+            pipeState.ex4_isval = pipeState_Next.ex4_isval;
+            pipeState.wb_isval = pipeState_Next.wb_isval;
+
+            pipeState_Next.wb_isval = pipeState_Next.ex4_isval;
+            pipeState_Next.ex4_isval = pipeState_Next.ex3_isval;
+            pipeState_Next.ex3_isval = pipeState_Next.ex2_isval;
+            pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
+            pipeState_Next.ex1_isval = pipeState_Next.id_isval;
+            pipeState_Next.id_isval = pipeState.if_isval;
+
         } else {
             cerr << "Invalid Pipe Type. Choose between 1: ALU, 2: MEM, 3: MULDIV." << endl;
         }
@@ -446,6 +490,13 @@ void initPipeline(PipeState_Next &pipeState_Next)
     pipeState_Next.ex3 = 1;
     pipeState_Next.ex4 = 1;
     pipeState_Next.wb = 1;
+
+    pipeState_Next.wb_isval = false;
+    pipeState_Next.ex4_isval = false;
+    pipeState_Next.ex3_isval = false;
+    pipeState_Next.ex2_isval = false;
+    pipeState_Next.ex1_isval = false;
+    pipeState_Next.id_isval = false;
 
 }
 
