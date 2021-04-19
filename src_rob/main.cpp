@@ -91,34 +91,40 @@ int main(int argc, char* argv[]){
 				i_type(mips_state,executed,decode,is_load, is_store);
 				j_type(mips_state,executed,decode);
 
-				if (is_mulDiv) {
+				if (is_mulDiv) { // check if is_mulDiv, send down pipe3 and send nop down pipe 1 and 2
 					instrMULDIV = instr;
 					instrALU = NOP;
 					instrMEM = NOP;
 
-				} else if (is_load || is_store) {
+				} else if (is_load || is_store) { // if is_load or is_store, send down pipe2
 					instrMEM = instr;
 					instrALU = NOP;
 					instrMULDIV = NOP;
 
-				} else {
+				} else { // otherwise send down pipe 1
 					instrMEM = NOP;
 					instrALU = instr;
 					instrMULDIV = NOP;				
 				}
 			}
 			
-			// check if is_mulDiv, send down pipe3 and send noop down pipe 1 and 2
-
-			// if is_load or is_store, send down pipe2
-			// else send down pipe 1
+			
 
 			moveOneCycle(mips_state, pipeStateALU, pipeState_NextALU, executed, CurCycle, instrALU, stalling, is_load, is_store, is_mulDiv, robState.tail);
 			moveOneCycle(mips_state, pipeStateMEM, pipeState_NextMEM, executed, CurCycle, instrMEM, stalling, is_load, is_store, is_mulDiv, robState.tail);
 			moveOneCycle(mips_state, pipeStateMULDIV, pipeState_NextMULDIV, executed, CurCycle, instrMULDIV, stalling, is_load, is_store, is_mulDiv, robState.tail);
 
-			// ROB Allocate
+			// ROB Commit
+			if ((!robState.pending[robState.head]) && (robState.valid[robState.head])) {
+				robState.valid[robState.head] = false;
+				if (robState.head != 15) {
+					robState.head += 1;
+				} else {
+					robState.head = 0;
+				}
+			}
 
+			// ROB Allocate
 			if (executed && (instr != NOP) && (robState.valid[robState.tail] != true)) {
 				robState.instr[robState.tail] = instr;
 				robState.valid[robState.tail] = true;
@@ -132,14 +138,6 @@ int main(int argc, char* argv[]){
 				
 			}
 
-
-			if(stalling == 1)
-			{
-				stalling = 0;
-			}
-
-			
-			
 			// ROB Fill
 			if (pipeStateALU.wb_isval) {
 				robState.pending[pipeStateALU.rob_fill_slot_wb] = false;
@@ -154,17 +152,15 @@ int main(int argc, char* argv[]){
 				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from MULDIV pipe: " << endl;
 			}
 
-
-
-			// ROB Commit
-			if ((!robState.pending[robState.head]) && (robState.valid[robState.head])) {
-				robState.valid[robState.head] = false;
-				if (robState.head != 15) {
-					robState.head += 1;
-				} else {
-					robState.head = 0;
-				}
+			if(stalling == 1)
+			{
+				stalling = 0;
 			}
+
+			
+
+
+
 
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);

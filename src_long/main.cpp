@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
 				stalling = 0;
 			}
 
-			//dumpPipeState(pipeState);
+			dumpPipeState(pipeState);
 
 			checkForStall(pipeState, stalling);
 
