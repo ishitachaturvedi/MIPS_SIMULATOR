@@ -118,16 +118,19 @@ int main(int argc, char* argv[]){
 			moveOneCycle(mips_state, pipeStateMULDIV, pipeState_NextMULDIV, executed, CurCycle, instrMULDIV, stalling, is_load, is_store, is_mulDiv, robState.tail);
 
 			// ROB Allocate
-			/*
+
 			if (executed && (instr != NOP)) {
 				robState.instr[robState.tail] = instr;
 				robState.valid[robState.tail] = true;
 				robState.pending[robState.tail] = true;
 				robState.preg[robState.tail] = decode.rt;
-				robState.tail += 1;
+				if (robState.tail != 15) {
+					robState.tail += 1;
+				} else {
+					robState.tail = 0;
+				}
+				
 			}
-
-			*/
 
 
 			if(stalling == 1)
