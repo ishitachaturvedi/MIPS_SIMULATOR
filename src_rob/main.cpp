@@ -119,7 +119,7 @@ int main(int argc, char* argv[]){
 
 			// ROB Allocate
 
-			if (executed && (instr != NOP)) {
+			if (executed && (instr != NOP) && (robState.valid[robState.tail] != true)) {
 				robState.instr[robState.tail] = instr;
 				robState.valid[robState.tail] = true;
 				robState.pending[robState.tail] = true;
@@ -157,12 +157,21 @@ int main(int argc, char* argv[]){
 
 
 			// ROB Commit
+			if ((!robState.pending[robState.head]) && (robState.valid[robState.head])) {
+				robState.valid[robState.head] = false;
+				if (robState.head != 15) {
+					robState.head += 1;
+				} else {
+					robState.head = 0;
+				}
+			}
 
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
 			//dumpROBState(robState);
 			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV);	
+
 
 
 			CurCycle = CurCycle + 1;
