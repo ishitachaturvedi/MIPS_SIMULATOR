@@ -103,6 +103,22 @@ bin/mips_simulator_3pipe : $(3PIPE_SIM_DEP)
 simulator_3pipe : bin/mips_simulator_3pipe
 
 ###################################################
+## ROB 3-pipe (ALU/MEM/MULDIV) bypass Simulator
+
+ROB_IDIR = include_rob
+ROB_SIM_DEP = src_rob/main.cpp src_rob/setUp.cpp src_rob/R_functions.cpp src_rob/error.cpp src_rob/J_functions.cpp src_rob/I_functions.cpp src_rob/Decode.cpp src_rob/dumpPipeline.cpp
+ROB_G++_FLAGS = -Wall -std=c++11 -O1 -I $(ROB_IDIR)
+
+# Build the simulation binary
+bin/mips_simulator_rob : $(ROB_SIM_DEP)
+	mkdir -p bin
+	g++ $(ROB_G++_FLAGS) $(ROB_SIM_DEP) -o bin/mips_simulator_rob
+
+
+# In order to comply with spec
+simulator_rob : bin/mips_simulator_rob
+
+###################################################
 
 ## Testbench
 
