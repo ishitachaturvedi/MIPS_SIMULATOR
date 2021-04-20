@@ -555,13 +555,14 @@ void initROB(ROBState &robState)
     robState.cycle = 0;
     robState.head = 0;
     robState.tail = 0;
+    robState.commited = false;
+    robState.commit_instr = NOP;
     for (int i = 0; i < ROB_SIZE; i += 1) {
         robState.instr[i] = NOP;
         robState.valid[i] = false;
         robState.pending[i] = false;
         robState.preg[i] = 0;
     }
-
 }
 
 //Byte's the smallest thing that can hold the opcode...
@@ -909,7 +910,7 @@ static void printInstr(uint32_t curInst, ostream & pipeState)
     }
 }
 
-void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV)
+void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState)
 {
 
     ofstream pipe_out("pipe_state.out", ios::app);
@@ -920,12 +921,30 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
         pipe_out << "####################################################" << endl;
         pipe_out << "Cycle: " << stateALU.cycle << endl;
         pipe_out << "####################################################" << endl;
+        pipe_out << "|";
+        pipe_out << "\t \t  IF \t \t \t  |  \t \t ID  \t \t \t | " << endl;
+        pipe_out << "|";
+        if (stateALU.if_isval) {
+            printInstr(stateALU.ifInstr, pipe_out);
+        } else if (stateMEM.if_isval) {
+            printInstr(stateMEM.ifInstr, pipe_out);
+        } else if (stateMULDIV.if_isval) {
+            printInstr(stateMULDIV.ifInstr, pipe_out);
+        } else {
+            pipe_out << "\t \t   nop\t\t\t ";
+        }
+        pipe_out << "|";
+        if (stateALU.id_isval) {
+            printInstr(stateALU.idInstr, pipe_out);
+        } else if (stateMEM.id_isval) {
+            printInstr(stateMEM.idInstr, pipe_out);
+        } else if (stateMULDIV.id_isval) {
+            printInstr(stateMULDIV.idInstr, pipe_out);
+        }
+        pipe_out << "|" << endl;
+        pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
         pipe_out << "ALU Pipe: " << endl;
         pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
-        pipe_out << "|";
-        printInstr(stateALU.ifInstr, pipe_out);
-        pipe_out << "|";
-        printInstr(stateALU.idInstr, pipe_out);
         pipe_out << "|";
         printInstr(stateALU.ex1Instr, pipe_out);
         pipe_out << "|";
@@ -934,10 +953,6 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
         pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;   
         pipe_out << "MEM Pipe: " << endl; 
         pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
-        pipe_out << "|";
-        printInstr(stateMEM.ifInstr, pipe_out);
-        pipe_out << "|";
-        printInstr(stateMEM.idInstr, pipe_out);
         pipe_out << "|";
         printInstr(stateMEM.ex1Instr, pipe_out);
         pipe_out << "|";
@@ -948,10 +963,6 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
         pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
         pipe_out << "MUL/DIV Pipe: " << endl;
         pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
-        pipe_out << "|";
-        printInstr(stateMULDIV.ifInstr, pipe_out);
-        pipe_out << "|";
-        printInstr(stateMULDIV.idInstr, pipe_out);
         pipe_out << "|";
         printInstr(stateMULDIV.ex1Instr, pipe_out);
         pipe_out << "|";
@@ -964,7 +975,15 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
         printInstr(stateMULDIV.wbInstr, pipe_out);
         pipe_out << "|" << endl;
         pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
-   
+           pipe_out << "|";
+        pipe_out << " \t \t COMMIT \t \t  | " << endl;
+        pipe_out << "|";
+        if (robState.commited) {
+            printInstr(robState.commit_instr, pipe_out);
+        } else {
+            pipe_out << "\t \t   nop\t\t\t";
+        }
+        pipe_out << "|" << endl;
     }
     else
     {

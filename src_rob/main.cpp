@@ -78,6 +78,8 @@ int main(int argc, char* argv[]){
 			uint32_t instr = mips_state.ram[mips_state.pc];
 
 			robState.cycle = CurCycle;
+			robState.commited = false;
+			robState.commit_instr = NOP;
 
 			//Send Instruction for Decode
 			decode_inst(instr,decode);
@@ -108,14 +110,14 @@ int main(int argc, char* argv[]){
 				}
 			}
 			
-			
-
 			moveOneCycle(mips_state, pipeStateALU, pipeState_NextALU, executed, CurCycle, instrALU, stalling, is_load, is_store, is_mulDiv, robState.tail);
 			moveOneCycle(mips_state, pipeStateMEM, pipeState_NextMEM, executed, CurCycle, instrMEM, stalling, is_load, is_store, is_mulDiv, robState.tail);
 			moveOneCycle(mips_state, pipeStateMULDIV, pipeState_NextMULDIV, executed, CurCycle, instrMULDIV, stalling, is_load, is_store, is_mulDiv, robState.tail);
 
 			// ROB Commit
 			if ((!robState.pending[robState.head]) && (robState.valid[robState.head])) {
+				robState.commited = true;
+				robState.commit_instr = robState.instr[robState.head];
 				robState.valid[robState.head] = false;
 				if (robState.head != 15) {
 					robState.head += 1;
@@ -157,16 +159,12 @@ int main(int argc, char* argv[]){
 				stalling = 0;
 			}
 
-			
-
-
-
 
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
 			//dumpROBState(robState);
-			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV);	
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
 
 
 

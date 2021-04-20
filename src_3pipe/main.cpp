@@ -127,7 +127,7 @@ int main(int argc, char* argv[]){
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
 
-			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV);	
+			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV);	
 
 
 			CurCycle = CurCycle + 1;

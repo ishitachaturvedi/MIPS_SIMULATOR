@@ -168,10 +168,12 @@ struct ROBState {
     uint32_t preg[ROB_SIZE];
     uint32_t head;
     uint32_t tail;
+    bool commited;
+    uint32_t commit_instr;
 
 };
 
-void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV);
+void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState);
 void dumpROBState(ROBState & robState);
 void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, bool is_store, bool is_mulDiv, uint32_t rob_tail);
 void initPipeline(PipeState_Next &pipeState_Next);
