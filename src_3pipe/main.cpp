@@ -63,6 +63,7 @@ int main(int argc, char* argv[]){
 		bool is_load = false;
 		bool is_store = false;
 		bool is_mulDiv = false;
+		bool is_md_non_stall = false;
 
 		setUp(mips_state, fileName);		//Passes the instructions to the vector
 
@@ -85,11 +86,11 @@ int main(int argc, char* argv[]){
 			{
 				tempNPC = mips_state.npc;
 				//Execute Instructions
-				r_type(mips_state,executed,decode,is_mulDiv);
+				r_type(mips_state,executed,decode,is_mulDiv, is_md_non_stall);
 				i_type(mips_state,executed,decode,is_load, is_store);
 				j_type(mips_state,executed,decode);
 
-				if (is_mulDiv) {
+				if (is_mulDiv || is_md_non_stall) {
 					instrMULDIV = instr;
 					instrALU = NOP;
 					instrMEM = NOP;

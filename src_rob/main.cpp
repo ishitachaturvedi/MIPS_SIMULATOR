@@ -63,6 +63,7 @@ int main(int argc, char* argv[]){
 		bool is_load = false;
 		bool is_store = false;
 		bool is_mulDiv = false;
+		bool is_md_non_stall = false;
 
 		setUp(mips_state, fileName);		//Passes the instructions to the vector
 
@@ -89,11 +90,11 @@ int main(int argc, char* argv[]){
 			{
 				tempNPC = mips_state.npc;
 				//Execute Instructions
-				r_type(mips_state,executed,decode,is_mulDiv);
+				r_type(mips_state,executed,decode,is_mulDiv, is_md_non_stall);
 				i_type(mips_state,executed,decode,is_load, is_store);
 				j_type(mips_state,executed,decode);
 
-				if (is_mulDiv) { // check if is_mulDiv, send down pipe3 and send nop down pipe 1 and 2
+				if (is_mulDiv || is_md_non_stall) { // check if is_mulDiv, send down pipe3 and send nop down pipe 1 and 2
 					instrMULDIV = instr;
 					instrALU = NOP;
 					instrMEM = NOP;
@@ -163,8 +164,8 @@ int main(int argc, char* argv[]){
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
-			//dumpROBState(robState);
-			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
+			dumpROBState(robState);
+			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
 
 
 

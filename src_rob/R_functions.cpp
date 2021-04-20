@@ -2,7 +2,7 @@
 #include <iostream>
 using namespace std;
 
-void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv){
+void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv, bool &is_md_non_stall){
 
 	// uint32_t instr = mips_state.ram[mips_state.pc];
 	// uint32_t opcode = (mips_state.ram[mips_state.pc] >> 26) & 0x0000003F;
@@ -12,7 +12,8 @@ void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv){
 	// uint32_t rt = (instr & 0x001F0000) >> 16; 
 	// uint32_t rs = (instr & 0x03E00000) >> 21; 
 
-	is_mulDiv = false;	
+	is_mulDiv = false;
+	is_md_non_stall = false;
 
 	if(!executed && decode.opcode_R == 0x00000000){
 		switch(decode.funct_field){
@@ -68,10 +69,12 @@ void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv){
 			case 0x0000001A:
 					div(mips_state, decode.rt, decode.rs);
 					executed = true;
+					is_md_non_stall = true;
 					return;
 			case 0x0000001B:
 					divu(mips_state, decode.rt, decode.rs);
 					executed = true;
+					is_md_non_stall = true;
 					return;
 			case 0x00000010:
 					mfhi(mips_state, decode.rd);
@@ -86,10 +89,12 @@ void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv){
 			case 0x00000018:
 					mult(mips_state, decode.rt, decode.rs);
 					executed = true;
+					is_md_non_stall = true;
 					return;
 			case 0x00000019:
 					multu(mips_state, decode.rt, decode.rs);
 					executed = true;
+					is_md_non_stall = true;
 					return;
 			case 0x00000003:
 					sra(mips_state, decode.rt, decode.shamt_field, decode.rd);
