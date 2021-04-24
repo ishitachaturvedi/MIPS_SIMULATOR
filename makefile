@@ -119,6 +119,22 @@ bin/mips_simulator_rob : $(ROB_SIM_DEP)
 simulator_rob : bin/mips_simulator_rob
 
 ###################################################
+## Dual issue-single commit ROB 3-pipe (ALU/MEM/MULDIV) bypass Simulator
+
+DUAL_IDIR = include_dual
+DUAL_SIM_DEP = src_dual/main.cpp src_dual/setUp.cpp src_dual/R_functions.cpp src_dual/error.cpp src_dual/J_functions.cpp src_dual/I_functions.cpp src_dual/Decode.cpp src_dual/dumpPipeline.cpp
+DUAL_G++_FLAGS = -Wall -std=c++11 -O1 -I $(DUAL_IDIR)
+
+# Build the simulation binary
+bin/mips_simulator_dual : $(DUAL_SIM_DEP)
+	mkdir -p bin
+	g++ $(DUAL_G++_FLAGS) $(DUAL_SIM_DEP) -o bin/mips_simulator_dual
+
+
+# In order to comply with spec
+simulator_dual : bin/mips_simulator_dual
+
+###################################################
 
 ## Testbench
 
