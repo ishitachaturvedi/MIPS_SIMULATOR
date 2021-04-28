@@ -164,8 +164,8 @@ int main(int argc, char* argv[]){
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
-			dumpROBState(robState);
-			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
+			//dumpROBState(robState);
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
 
 
 
