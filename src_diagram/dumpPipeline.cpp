@@ -1,6 +1,5 @@
 #include "dumpPipeline.hpp"
 #include <iostream>
-#include <vector>
 
 static void handleOpZeroInst(uint32_t instr, std::ostream & out_stream);
 static void printInstr(uint32_t curInst, std::ostream & pipeState);
@@ -16,6 +15,8 @@ static void handleJInst(uint32_t instr, std::ostream & out_stream);
 #define MULDIV_PIPE 3
 
 #define ROB_SIZE 16
+#define DIAGRAM_SIZE 50
+#define DIAGRAM_CYCLES 50
 
 #define NOP 0x00000000
 
@@ -86,17 +87,23 @@ enum FUN_IDS
     FUN_XOR = 0x26
 };
 
-void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling, PipeStateIFID &pipeStateIFID)
+void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling)
 {
     // Get current instruction in decode
-    uint32_t instr_DA = pipeStateIFID.idInstrA;
-    uint32_t instr_DB = pipeStateIFID.idInstrB;
+    uint32_t instr_D = NOP;
+
+    if (pipeStateALU.idInstr != NOP) {
+        instr_D = pipeStateALU.idInstr; 
+    } else if (pipeStateMEM.idInstr != NOP) {
+        instr_D = pipeStateMEM.idInstr; 
+    } else if (pipeStateMULDIV.idInstr != NOP) {
+        instr_D = pipeStateMULDIV.idInstr; 
+    }
+
 
     // Decode current instruction
-    Decode idA;
-    Decode idB;
-    decode_inst(instr_DA, idA);
-    decode_inst(instr_DB, idB);
+    Decode id;
+    decode_inst(instr_D, id);
 
     // Decode Mem instructions;
     Decode ex1MEM;
@@ -116,14 +123,11 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
 
     // if ex1 are load inst which is being waited on, we stall
     if(
-        (pipeStateIFID.stall_state_ID !=1)
-        && (
-            ((idA.rs == ex1MEM.rt || idA.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr))
-            || ((idB.rs == ex1MEM.rt || idB.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr))
-        )
+        ((id.rs == ex1MEM.rt || id.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr))
     )
     {
         stalling = 1;
+        
     }
 
 
@@ -135,823 +139,404 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
     std::cout  << "--------------------------------------------------------------------------" << endl;
     */
 
+
     // if ex1, ex2, ex3 are mulDiv inst which is being waited on, we stall
     if(
-        (((idA.rs == ex1MD.rd || idA.rt == ex1MD.rd) && ex1MD.rd != 0x0 && pipeStateMULDIV.ex1_isMulDiv && !(pipeStateMULDIV.ex1Instr == pipeStateMULDIV.ex3Instr) && (pipeStateIFID.stall_state_ID !=1))
-        || ((idA.rs == ex2MD.rd || idA.rt == ex2MD.rd) && ex2MD.rd != 0x0 && pipeStateMULDIV.ex2_isMulDiv && !(pipeStateMULDIV.ex2Instr == pipeStateMULDIV.ex3Instr))
-        || ((idA.rs == ex3MD.rd || idA.rt == ex3MD.rd) && ex3MD.rd != 0x0 && pipeStateMULDIV.ex3_isMulDiv && !(pipeStateMULDIV.ex3Instr == pipeStateMULDIV.ex4Instr)))
-        ||(((idB.rs == ex1MD.rd || idB.rt == ex1MD.rd) && ex1MD.rd != 0x0 && pipeStateMULDIV.ex1_isMulDiv && !(pipeStateMULDIV.ex1Instr == pipeStateMULDIV.ex3Instr))
-        || ((idB.rs == ex2MD.rd || idB.rt == ex2MD.rd) && ex2MD.rd != 0x0 && pipeStateMULDIV.ex2_isMulDiv && !(pipeStateMULDIV.ex2Instr == pipeStateMULDIV.ex3Instr))
-        || ((idB.rs == ex3MD.rd || idB.rt == ex3MD.rd) && ex3MD.rd != 0x0 && pipeStateMULDIV.ex3_isMulDiv && !(pipeStateMULDIV.ex3Instr == pipeStateMULDIV.ex4Instr)))
+        (((id.rs == ex1MD.rd || id.rt == ex1MD.rd) && ex1MD.rd != 0x0 && pipeStateMULDIV.ex1_isMulDiv && !(pipeStateMULDIV.ex1Instr == pipeStateMULDIV.ex3Instr))
+        || ((id.rs == ex2MD.rd || id.rt == ex2MD.rd) && ex2MD.rd != 0x0 && pipeStateMULDIV.ex2_isMulDiv && !(pipeStateMULDIV.ex2Instr == pipeStateMULDIV.ex3Instr))
+        || ((id.rs == ex3MD.rd || id.rt == ex3MD.rd) && ex3MD.rd != 0x0 && pipeStateMULDIV.ex3_isMulDiv && !(pipeStateMULDIV.ex3Instr == pipeStateMULDIV.ex4Instr)))
     )
     {
         stalling = 1;
     }
 }
 
-void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool&is_RA, bool&is_IA, bool&is_JA, bool&is_RB, bool&is_IB, bool&is_JB, Decode& decodeA, Decode& decodeB, bool&is_md_non_stallA, bool&is_md_non_stallB, uint32_t instrA, uint32_t instrB)
+//move pipeline one cycle forward
+void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, bool is_store, bool is_mulDiv, uint32_t rob_tail)
 {
-    // CHECK FOR STR HAZARDS
-    bool str_hazard = false;
-    if((!is_jumpA && !is_branchA) && (instrA!=NOP && instrB!= NOP))
-    {
-        if(
-            ((is_mulDivA||is_md_non_stallA) && (is_mulDivB||is_md_non_stallB))
-            || ((is_loadA || is_storeA) && (is_loadB || is_storeB))
-            || ((!is_mulDivA && !is_loadA && !is_storeA) && (!is_mulDivB && !is_loadB && !is_storeB))
-        )
-        {
-            str_hazard = true;
-        }
-    }
-
-    //CHECK FOR DATA STALLS
-    bool mem_hazard = false;
-    if(!is_jumpA && !is_branchA)
-    {
-        if(is_RA)
-        {
-            if(is_RB)
-            {
-                if
-                ((decodeA.rd == decodeB.rs || decodeA.rd == decodeB.rt) && decodeA.rd!= 0x0)
-                    mem_hazard = true;
-            }
-            else if(is_IB)
-            {
-                if
-                ((decodeA.rd == decodeB.rs) && decodeA.rd!= 0x0)
-                    mem_hazard = true;
-            }
-        }
-        if(is_IA)
-        {
-            if(is_RB)
-            {
-                if
-                ((decodeA.rt == decodeB.rs || decodeA.rt == decodeB.rt) && decodeA.rt!= 0x0)
-                    mem_hazard = true;
-            }
-            else if(is_IB)
-            {
-                if
-                ((decodeA.rt == decodeB.rs) && decodeA.rt!= 0x0)
-                    mem_hazard = true;
-            }
-        }
-    }
-
-    hazard = mem_hazard || str_hazard;
-}
-
-void moveOneCycleMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next, uint32_t instr, bool executed, bool is_mulDiv, uint32_t rob_tail, uint32_t PC, std::vector<int32_t> reg, bool valid)
-{
-    // Instruction shifting
-    pipeState.ex1Instr = instr;
-    pipeState.ex2Instr = pipeState_Next.ex2Instr;
-    pipeState.ex3Instr = pipeState_Next.ex3Instr;
-    pipeState.ex4Instr = pipeState_Next.ex4Instr;
-    pipeState.wbInstr = pipeState_Next.wbInstr;
-
-    pipeState_Next.wbInstr = pipeState_Next.ex4Instr;
-    pipeState_Next.ex4Instr = pipeState_Next.ex3Instr;
-    pipeState_Next.ex3Instr = pipeState_Next.ex2Instr;
-    pipeState_Next.ex2Instr = instr;
-
-    //PC setting
-    pipeState.ex1PC = PC;
-    pipeState.ex2PC = pipeState_Next.ex2PC;
-    pipeState.ex3PC = pipeState_Next.ex3PC;
-    pipeState.ex4PC = pipeState_Next.ex4PC;
-    pipeState.wbPC = pipeState_Next.wbPC;
-    
-    pipeState_Next.wbPC = pipeState_Next.ex4PC;
-    pipeState_Next.ex4PC = pipeState_Next.ex3PC;
-    pipeState_Next.ex3PC = pipeState_Next.ex2PC;
-    pipeState_Next.ex2PC = PC;
-
-    //reg setting
-    pipeState.ex1reg = reg;
-    pipeState.ex2reg = pipeState_Next.ex2reg;
-    pipeState.ex3reg = pipeState_Next.ex3reg;
-    pipeState.ex4reg = pipeState_Next.ex4reg;
-    pipeState.wbreg = pipeState_Next.wbreg;
-    
-    pipeState_Next.wbreg = pipeState_Next.ex4reg;
-    pipeState_Next.ex4reg = pipeState_Next.ex3reg;
-    pipeState_Next.ex3reg = pipeState_Next.ex2reg;
-    pipeState_Next.ex2reg = reg;
-
-    //execute setting
-
-    pipeState.ex1 = executed;
-    pipeState.ex2 = pipeState_Next.ex2;
-    pipeState.ex3 = pipeState_Next.ex3;
-    pipeState.ex4 = pipeState_Next.ex4;
-    pipeState.wb = pipeState_Next.wb;
-
-    pipeState_Next.wb = pipeState_Next.ex4;
-    pipeState_Next.ex4 = pipeState_Next.ex3;
-    pipeState_Next.ex3 = pipeState_Next.ex2;
-    pipeState_Next.ex2 = executed;
-
-    //is_mulDiv
-    pipeState.ex1_isMulDiv = is_mulDiv;
-    pipeState.ex2_isMulDiv = pipeState_Next.ex2_isMulDiv;
-    pipeState.ex3_isMulDiv = pipeState_Next.ex3_isMulDiv;
-
-    pipeState_Next.ex3_isMulDiv = pipeState_Next.ex2_isMulDiv;
-    pipeState_Next.ex2_isMulDiv = is_mulDiv;
-
-    // ROB fill slots
-    pipeState.rob_fill_slot_ex1 = rob_tail;
-    pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
-    pipeState.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex3;
-    pipeState.rob_fill_slot_ex4 = pipeState_Next.rob_fill_slot_ex4;
-    pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
-
-    pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex4;
-    pipeState_Next.rob_fill_slot_ex4 = pipeState_Next.rob_fill_slot_ex3;
-    pipeState_Next.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex2;
-    pipeState_Next.rob_fill_slot_ex2 = rob_tail;
-
-    // INSTRUCTION Valid
-    pipeState.ex1_isval = valid;
-    pipeState.ex2_isval = pipeState_Next.ex2_isval;
-    pipeState.ex3_isval = pipeState_Next.ex3_isval;
-    pipeState.ex4_isval = pipeState_Next.ex4_isval;
-    pipeState.wb_isval = pipeState_Next.wb_isval;
-
-    pipeState_Next.wb_isval = pipeState_Next.ex4_isval;
-    pipeState_Next.ex4_isval = pipeState_Next.ex3_isval;
-    pipeState_Next.ex3_isval = pipeState_Next.ex2_isval;
-    pipeState_Next.ex2_isval = valid;
-}
-
-void moveOneCycleALU(PipeState &pipeState, PipeState_Next &pipeState_Next, uint32_t instr, bool executed, uint32_t rob_tail, uint32_t PC, std::vector<int32_t> reg, bool valid)
-{
-
-    // Instruction shifting
-    pipeState.ex1Instr = instr;
-    pipeState.wbInstr = pipeState_Next.wbInstr;
-
-    pipeState_Next.wbInstr = instr;
-
-    //PC setting
-    pipeState.ex1PC = PC;
-    pipeState.wbPC = pipeState_Next.wbPC;
-    
-    pipeState_Next.wbPC = PC;
-
-    //reg setting
-    pipeState.ex1reg = reg;
-    pipeState.wbreg = pipeState_Next.wbreg;
-    
-    pipeState_Next.wbreg = reg;
-
-    //execute setting
-
-    pipeState.ex1 = executed;
-    pipeState.wb = pipeState_Next.wb;
-
-    pipeState_Next.wb = executed;
-
-    // ROB fill slots
-    pipeState.rob_fill_slot_ex1 = rob_tail;
-    pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
-
-    pipeState_Next.rob_fill_slot_wb = rob_tail;
-
-    // iNSTRUCTION Valid
-    pipeState.ex1_isval = valid;
-    pipeState.wb_isval = pipeState_Next.wb_isval;
-
-    pipeState_Next.wb_isval = valid;
-}
-
-void moveOneCycleMEM(PipeState &pipeState, PipeState_Next &pipeState_Next, uint32_t instr, bool executed, bool is_load, uint32_t rob_tail, uint32_t PC, std::vector<int32_t> reg, bool valid)
-{
-    // Instruction shifting
-    pipeState.ex1Instr = instr;
-    pipeState.ex2Instr = pipeState_Next.ex2Instr;
-    pipeState.wbInstr = pipeState_Next.wbInstr;
-
-    pipeState_Next.wbInstr = pipeState_Next.ex2Instr;
-    pipeState_Next.ex2Instr = instr;
-
-    //PC setting
-    pipeState.ex1PC = PC;
-    pipeState.ex2PC = pipeState_Next.ex2PC;
-    pipeState.wbPC = pipeState_Next.wbPC;
-    
-    pipeState_Next.wbPC = pipeState_Next.ex2PC;
-    pipeState_Next.ex2PC = PC;
-
-    //reg setting
-    pipeState.ex1reg = reg;
-    pipeState.ex2reg = pipeState_Next.ex2reg;
-    pipeState.wbreg = pipeState_Next.wbreg;
-    
-    pipeState_Next.wbreg = pipeState_Next.ex2reg;
-    pipeState_Next.ex2reg = reg;
-
-    //execute setting
-
-    pipeState.ex1 = executed;
-    pipeState.ex2 = pipeState_Next.ex2;
-    pipeState.wb = pipeState_Next.wb;
-
-    pipeState_Next.wb = pipeState_Next.ex2;
-    pipeState_Next.ex2 = executed;
-
-    //is_load
-    pipeState.ex1_isload = is_load;
-    pipeState.ex2_isload = pipeState_Next.ex2_isload;
-    
-    pipeState_Next.ex2_isload = is_load;
-
-    // ROB fill slots
-    pipeState.rob_fill_slot_ex1 = rob_tail;
-    pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
-    pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
-
-    pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex2;
-    pipeState_Next.rob_fill_slot_ex2 = rob_tail;
-
-    // iNSTRUCTION Valid
-    pipeState.ex1_isval = valid;
-    pipeState.ex2_isval = pipeState_Next.ex2_isval;
-    pipeState.wb_isval = pipeState_Next.wb_isval;
-
-    pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
-    pipeState_Next.ex2_isval = valid;
-}
-
-void MoveOneCycleIFIDPause(PipeStateIFID &pipeStateIFID, State &mips_state)
-{
-    pipeStateIFID.stall_state_IF = 0;
-    pipeStateIFID.ifInstrA = mips_state.ram[pipeStateIFID.idPCA+2];
-    pipeStateIFID.ifInstrB = mips_state.ram[pipeStateIFID.idPCB+2];
-    pipeStateIFID.ifPCA = pipeStateIFID.idPCA+2;
-    pipeStateIFID.ifPCB = pipeStateIFID.idPCB+2;
-
-    pipeStateIFID.is_hazard_IF = 0;
-    pipeStateIFID.is_jumpA_IF = 0;
-    pipeStateIFID.is_branchA_IF = 0;
-    pipeStateIFID.is_jumpB_IF = 0;
-    pipeStateIFID.is_branchB_IF = 0;
-    pipeStateIFID.if_isMulDivA = 0;
-    pipeStateIFID.if_isMulDivB = 0;
-    pipeStateIFID.if_isloadA = 0;
-    pipeStateIFID.if_isloadB = 0;
-    pipeStateIFID.if_isstoreA = 0;
-    pipeStateIFID.if_isstoreB = 0;
-    pipeStateIFID.IFA = 0;
-    pipeStateIFID.IFB = 0;
-    pipeStateIFID.if_isvalA = 0;
-    pipeStateIFID.if_isvalB = 0;
-}
-
-void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t rob_tail, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB)
-{
-
-    //pass stall stage
-    pipeStateIFID.stall_state_EX = pipeStateIFID.stall_state_ID;
-    pipeStateIFID.stall_state_ID = pipeStateIFID.stall_state_IF;
-    pipeStateIFID.stall_state_IF = stall_state;
-
-    //pass instructions
-    if ( pipeStateIFID.stall_state_EX == 0)
-    {
-        //piper << "IN 0\n";
-        pipeStateIFID.exInstrA = pipeStateIFID.idInstrA;
-        pipeStateIFID.idInstrA = pipeStateIFID.ifInstrA;
-        pipeStateIFID.ifInstrA = instrA;
-        
-        pipeStateIFID.exInstrB = pipeStateIFID.idInstrB;
-        pipeStateIFID.idInstrB = pipeStateIFID.ifInstrB;
-        pipeStateIFID.ifInstrB = instrB;
-    }
-
-    else if ( pipeStateIFID.stall_state_EX == 2)
-    {
-        pipeStateIFID.exInstrA = pipeStateIFID.idInstrA;
-        pipeStateIFID.ifInstrA = instrA;
-        pipeStateIFID.idInstrA = NOP;
-        
-        pipeStateIFID.exInstrB = NOP;
-        pipeStateIFID.ifInstrB = instrB;
-    }
-
-    else if ( pipeStateIFID.stall_state_EX == 1)
-    {
-        pipeStateIFID.exInstrA = NOP;
-        pipeStateIFID.idInstrA = pipeStateIFID.ifInstrA;
-        pipeStateIFID.ifInstrA = instrA;
-        
-        pipeStateIFID.exInstrB = pipeStateIFID.idInstrB;
-        pipeStateIFID.idInstrB = pipeStateIFID.ifInstrB;
-        pipeStateIFID.ifInstrB = instrB;
-    }
-
-    //pass PC
-    if ( pipeStateIFID.stall_state_EX ==1 || pipeStateIFID.stall_state_EX ==0)
-    {
-        pipeStateIFID.exPCA = pipeStateIFID.idPCA;
-        pipeStateIFID.idPCA = pipeStateIFID.ifPCA;
-        pipeStateIFID.ifPCA = pc_A;
-
-        pipeStateIFID.exPCB = pipeStateIFID.idPCB;
-        pipeStateIFID.idPCB = pipeStateIFID.ifPCB;
-        pipeStateIFID.ifPCB = pc_B;
-    }
-
-
-    if ( pipeStateIFID.stall_state_EX ==2 || pipeStateIFID.stall_state_EX ==0)
-    {
-        //pass ROB tail
-        pipeStateIFID.rob_fill_slot_exA = rob_tail;
-
-        uint32_t rob_tailB;
-        if(rob_tail < ROB_SIZE-1)
-            rob_tailB = rob_tail + 1;
-        else
-            rob_tailB = 0;
-
-        pipeStateIFID.rob_fill_slot_exB = rob_tailB;
-    }
-
-    // Pass register states
-    pipeStateIFID.exregA = pipeStateIFID.idregA;
-    pipeStateIFID.idregA = pipeStateIFID.ifregA;
-    pipeStateIFID.ifregA = regA;
-
-    pipeStateIFID.exregB = pipeStateIFID.idregB;
-    pipeStateIFID.idregB = pipeStateIFID.ifregB;
-    pipeStateIFID.ifregB = regB;
-
-    //pass hazard from IF to ID
-    if ( pipeStateIFID.stall_state_EX == 0)
-    {
-        pipeStateIFID.is_hazard_EX = pipeStateIFID.is_hazard_ID;
-        pipeStateIFID.is_hazard_ID = pipeStateIFID.is_hazard_IF;
-
-        pipeStateIFID.is_jumpA_EX = pipeStateIFID.is_jumpA_ID;
-        pipeStateIFID.is_jumpA_ID = pipeStateIFID.is_jumpA_IF;
-        
-        pipeStateIFID.is_branchA_EX = pipeStateIFID.is_branchA_ID;
-        pipeStateIFID.is_branchA_ID = pipeStateIFID.is_branchA_IF;
-
-        pipeStateIFID.is_jumpB_EX = pipeStateIFID.is_jumpB_ID;
-        pipeStateIFID.is_jumpB_ID = pipeStateIFID.is_jumpB_IF;
-
-        pipeStateIFID.is_branchB_EX = pipeStateIFID.is_branchB_ID;
-        pipeStateIFID.is_branchB_ID = pipeStateIFID.is_branchB_IF;
-
-        //Pass MULDIV, LOAD/STORE ETC
-        pipeStateIFID.ex_isMulDivA = pipeStateIFID.id_isMulDivA;
-        pipeStateIFID.id_isMulDivA = pipeStateIFID.if_isMulDivA;
-
-        pipeStateIFID.ex_isMulDivB = pipeStateIFID.id_isMulDivB;
-        pipeStateIFID.id_isMulDivB = pipeStateIFID.if_isMulDivB;
-
-        pipeStateIFID.ex_isloadA = pipeStateIFID.id_isloadA;
-        pipeStateIFID.id_isloadA = pipeStateIFID.if_isloadA;
-
-        pipeStateIFID.ex_isloadB = pipeStateIFID.id_isloadB;
-        pipeStateIFID.id_isloadB = pipeStateIFID.if_isloadB;
-
-        pipeStateIFID.ex_isstoreA = pipeStateIFID.id_isstoreA;
-        pipeStateIFID.id_isstoreA = pipeStateIFID.if_isstoreA;
-
-        pipeStateIFID.ex_isstoreB = pipeStateIFID.id_isstoreB;
-        pipeStateIFID.id_isstoreB = pipeStateIFID.if_isstoreB;
-    }
-
-    if ( pipeStateIFID.stall_state_EX == 2)
-    {
-
-        pipeStateIFID.is_jumpA_EX = pipeStateIFID.is_jumpA_ID;
-        pipeStateIFID.is_jumpA_ID = pipeStateIFID.is_jumpA_IF;
-
-        pipeStateIFID.is_branchA_EX = pipeStateIFID.is_branchA_ID;
-        pipeStateIFID.is_branchA_ID = pipeStateIFID.is_branchA_IF;
-
-        //Pass MULDIV, LOAD/STORE ETC
-        pipeStateIFID.ex_isMulDivA = pipeStateIFID.id_isMulDivA;
-        pipeStateIFID.id_isMulDivA = pipeStateIFID.if_isMulDivA;
-
-        pipeStateIFID.ex_isloadA = pipeStateIFID.id_isloadA;
-        pipeStateIFID.id_isloadA = pipeStateIFID.if_isloadA;
-
-        pipeStateIFID.ex_isstoreA = pipeStateIFID.id_isstoreA;
-        pipeStateIFID.id_isstoreA = pipeStateIFID.if_isstoreA;
-
-    }
-
-    if ( pipeStateIFID.stall_state_EX == 1)
-    {
-        pipeStateIFID.is_hazard_EX = pipeStateIFID.is_hazard_ID;
-        pipeStateIFID.is_hazard_ID = pipeStateIFID.is_hazard_IF;
-
-        pipeStateIFID.is_jumpB_EX = pipeStateIFID.is_jumpB_ID;
-        pipeStateIFID.is_jumpB_ID = pipeStateIFID.is_jumpB_IF;
-
-        pipeStateIFID.is_branchB_EX = pipeStateIFID.is_branchB_ID;
-        pipeStateIFID.is_branchB_ID = pipeStateIFID.is_branchB_IF;
-
-        pipeStateIFID.ex_isMulDivB = pipeStateIFID.id_isMulDivB;
-        pipeStateIFID.id_isMulDivB = pipeStateIFID.if_isMulDivB;
-
-        pipeStateIFID.ex_isloadB = pipeStateIFID.id_isloadB;
-        pipeStateIFID.id_isloadB = pipeStateIFID.if_isloadB;
-
-        pipeStateIFID.ex_isstoreB = pipeStateIFID.id_isstoreB;
-        pipeStateIFID.id_isstoreB = pipeStateIFID.if_isstoreB;
-    }
-
-    {
-        pipeStateIFID.ex1A = pipeStateIFID.IDA;
-        pipeStateIFID.IDA = pipeStateIFID.IFA;
-
-        pipeStateIFID.ex1B = pipeStateIFID.IDB;
-        pipeStateIFID.IDB = pipeStateIFID.IFB;
-    }
-
-    if ( pipeStateIFID.stall_state_EX == 2)
-    {
-        pipeStateIFID.ex1B = false;
-    }
-    if ( pipeStateIFID.stall_state_EX == 1)
-    {
-        pipeStateIFID.ex1A = false;
-    }
-
-
-    //pass valid state
-    {
-        pipeStateIFID.ex_isvalA = pipeStateIFID.id_isvalA;
-        pipeStateIFID.id_isvalA = pipeStateIFID.if_isvalA;
-
-        pipeStateIFID.ex_isvalB = pipeStateIFID.id_isvalB;
-        pipeStateIFID.id_isvalB = pipeStateIFID.if_isvalB;
-    }
-
-    //change if only when not stalling front end
-    if ( pipeStateIFID.stall_state_EX == 1 || pipeStateIFID.stall_state_EX == 0)
-    {
-        pipeStateIFID.is_hazard_IF = hazard;
-        pipeStateIFID.is_jumpA_IF = is_jumpA;
-        pipeStateIFID.is_branchA_IF = is_branchA;
-        pipeStateIFID.is_jumpB_IF = is_jumpB;
-        pipeStateIFID.is_branchB_IF = is_branchB;
-        pipeStateIFID.if_isMulDivA = is_mulDivA;
-        pipeStateIFID.if_isMulDivB = is_mulDivB;
-        pipeStateIFID.if_isloadA = is_loadA;
-        pipeStateIFID.if_isloadB = is_loadB;
-        pipeStateIFID.if_isstoreA = is_storeA;
-        pipeStateIFID.if_isstoreB = is_storeB;
-        pipeStateIFID.IFA = executedA;
-        pipeStateIFID.IFB = executedB;
-        pipeStateIFID.if_isvalA = is_valA;
-        pipeStateIFID.if_isvalB = is_valB;
-    }
-
-}
-
-void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next)
-{
-    pipeState.wbInstr = pipeState.ex1Instr;
-
-    pipeState_Next.wbInstr =  pipeState.ex1Instr;
-
-    // ROB fill slots
-    pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
-
-    pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex1;
-
-    // iNSTRUCTION Valid
-    pipeState.ex2_isval = pipeState_Next.ex2_isval;
-    pipeState.wb_isval = pipeState_Next.wb_isval;
-
-    pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
-    pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
-}
-
-void moveStalledMEM(PipeState &pipeState, PipeState_Next &pipeState_Next)
-{
-    pipeState.wbInstr = pipeState.ex2Instr;
-    pipeState.ex2Instr = pipeState.ex1Instr;
-
-    pipeState_Next.wbInstr =  pipeState.ex2Instr;
-
-    // ROB fill slots
-    pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
-    pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
-
-    pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex2;
-    pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
-
-    // iNSTRUCTION Valid
-    pipeState.ex2_isval = pipeState_Next.ex2_isval;
-    pipeState.wb_isval = pipeState_Next.wb_isval;
-
-    pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
-    pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
-}
-
-void moveStalledMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next)
-{
-    pipeState.wbInstr = pipeState.ex4Instr;
-    pipeState.ex4Instr = pipeState.ex3Instr;
-    pipeState.ex3Instr = pipeState.ex2Instr;
-    pipeState.ex2Instr = pipeState.ex1Instr;
-
-    pipeState_Next.wbInstr =  pipeState.ex4Instr;
-    pipeState_Next.ex4Instr =  pipeState.ex3Instr;
-    pipeState_Next.ex3Instr = pipeState.ex2Instr;
-
-
-    // ROB fill slots
-    pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
-    pipeState.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex3;
-    pipeState.rob_fill_slot_ex4 = pipeState_Next.rob_fill_slot_ex4;
-    pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
-
-    pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex4;
-    pipeState_Next.rob_fill_slot_ex4 = pipeState_Next.rob_fill_slot_ex3;
-    pipeState_Next.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex2;
-    pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
-
-
-    // iNSTRUCTION Valid
-    pipeState.ex2_isval = pipeState_Next.ex2_isval;
-    pipeState.ex3_isval = pipeState_Next.ex3_isval;
-    pipeState.ex4_isval = pipeState_Next.ex4_isval;
-    pipeState.wb_isval = pipeState_Next.wb_isval;
-
-    pipeState_Next.wb_isval = pipeState_Next.ex4_isval;
-    pipeState_Next.ex4_isval = pipeState_Next.ex3_isval;
-    pipeState_Next.ex3_isval = pipeState_Next.ex2_isval;
-    pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
-}
-
-void moveOneCycle(State &mips_state, PipeStateIFID &pipeStateIFID, PipeState &pipeStateMULDIV, PipeState_Next &pipeState_NextMULDIV, PipeState &pipeStateALU, PipeState_Next &pipeState_NextALU, PipeState &pipeStateMEM, PipeState_Next &pipeState_NextMEM, bool executedA, bool executedB, int &CurCycle, uint32_t instrA, uint32_t instrB, int& stalling, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, uint32_t rob_tail, bool& hazard, uint32_t pc_A, uint32_t pc_B, std::vector<int32_t> regA, std::vector<int32_t> regB, bool&is_md_non_stallA, bool&is_md_non_stallB, bool & pause_for_jump_branch)
-{
-    //ofstream piper("pipe_test.out", ios::app);
-    uint32_t instrALU = NOP;
-    uint32_t instrMEM = NOP;
-    uint32_t instrMULDIV = NOP;
-
-    int ALU_DONE = 0;
-    int MEM_DONE = 0;
-    int MULDIV_DONE = 0;
-
-    bool executed = pipeStateIFID.ex1A || pipeStateIFID.ex1B;   
-
-    bool is_MulDiv = false;
-    bool is_load = false;
-
-    uint32_t rob_tail_ALU = 0;
-    uint32_t rob_tail_MEM = 0;
-    uint32_t rob_tail_MULDIV = 0;
-
-    uint32_t pc_MULDIV = 1;
-    uint32_t pc_MEM = 1;
-    uint32_t pc_ALU = 1;
-
-    std::vector<int32_t> reg_MULDIV;
-    std::vector<int32_t> reg_MEM;
-    std::vector<int32_t> reg_ALU;
-
-    bool valid_MULDIV = false;
-    bool valid_MEM = false;
-    bool valid_ALU = false;
-
-    is_mulDivA = is_mulDivA || is_md_non_stallA;
-    is_mulDivB = is_mulDivB || is_md_non_stallB;
-
-    int stall_state = 0;
-
-    if(pipeStateIFID.stall_state_IF != 0)
-    {
-        stall_state = pipeStateIFID.stall_state_IF - 1;
-        executed = true;
-    }
-
-    if(stall_state == 0 && stalling != 1)
-    {
-        if (hazard)
-        {
-            stall_state = 2;
-        }
-        executed = true;
-    }
-
-    //instr is VALID for ROB if non NOP and B is valid if A has no jumps or taken branches
-    bool is_valA = (executedA && (instrA != NOP));
-    bool is_valB = (executedB && (instrB != NOP) && !is_jumpA &&!is_branchA); 
-
-    MoveOneCycleIFID(pipeStateIFID, instrA, instrB, pc_A, pc_B, rob_tail, regA, regB, hazard, is_jumpA, is_branchA, is_jumpB, is_branchB, is_loadA, is_storeA, is_mulDivA, is_loadB, is_storeB, is_mulDivB, executedA, executedB, stall_state, is_valA, is_valB);
-
-    if(pause_for_jump_branch)
-    {
-        pause_for_jump_branch = false;
-    }
-
-    if((pipeStateIFID.is_branchB_ID || pipeStateIFID.is_branchA_ID) && pipeStateIFID.stall_state_EX==1 && !pipeStateIFID.is_jumpA_ID)    
-    {
-        MoveOneCycleIFIDPause(pipeStateIFID, mips_state);
-    }
-
-    //if branch taken or a jump in ID stage, add a cycle for branch delay
-    if(pipeStateIFID.stall_state_EX==0 && (pipeStateIFID.stall_state_ID==0) && (pipeStateIFID.is_branchA_ID ||pipeStateIFID.is_branchB_ID) && !pipeStateIFID.is_jumpA_ID &&(pipeStateIFID.IDA))
-    {
-       pause_for_jump_branch = true;
-       MoveOneCycleIFIDPause(pipeStateIFID, mips_state);
-    }
-
-    if(pipeStateIFID.stall_state_EX==2 && (!pipeStateIFID.is_branchA_ID && pipeStateIFID.is_branchB_ID))
-    {
-       pause_for_jump_branch = true;
-       MoveOneCycleIFIDPause(pipeStateIFID, mips_state);
-    }
-
-    bool isALU_B = !pipeStateIFID.ex_isMulDivB && !(pipeStateIFID.ex_isloadB || pipeStateIFID.ex_isstoreB);
-    bool isALU_A = !pipeStateIFID.ex_isMulDivA && !(pipeStateIFID.ex_isloadA || pipeStateIFID.ex_isstoreA) && !(pipeStateIFID.exInstrA==NOP && pipeStateIFID.exInstrB!=NOP && isALU_B);
-
-    //initialise with latest value of registers
-    reg_MULDIV = pipeStateIFID.exregB;
-    reg_MEM = pipeStateIFID.exregB;
-    reg_ALU = pipeStateIFID.exregB;
-
-    pipeStateIFID.cycle = CurCycle;
-
+    std::flush(std::cout);
     if(stalling != 1)
-    {
-        //if no hazards
-        if(pipeStateIFID.stall_state_EX == 0)
-        {
-            //if a jump, only instA will set a value
-            // set inst A
-            if (pipeStateIFID.ex_isMulDivA && MULDIV_DONE == 0)
-            {
-                instrMULDIV = pipeStateIFID.exInstrA;
-                is_MulDiv = pipeStateIFID.ex_isMulDivA;
-                rob_tail_MULDIV = pipeStateIFID.rob_fill_slot_exA;
-                pc_MULDIV = pipeStateIFID.exPCA;
-                reg_MULDIV = pipeStateIFID.exregA;
-                valid_MULDIV = pipeStateIFID.ex_isvalA;
-                MULDIV_DONE = 1;
-            }
-            else if ((pipeStateIFID.ex_isloadA || pipeStateIFID.ex_isstoreA) && MEM_DONE == 0) // if is_load or is_store, send down pipe2
-            {
-                instrMEM = pipeStateIFID.exInstrA;
-                rob_tail_MEM = pipeStateIFID.rob_fill_slot_exA;
-                is_load = pipeStateIFID.ex_isloadA;
-                pc_MEM = pipeStateIFID.exPCA;
-                reg_MEM = pipeStateIFID.exregA;
-                valid_MEM = pipeStateIFID.ex_isvalA;
-                MEM_DONE = 1;
-            }
-            else if(isALU_A && ALU_DONE == 0) // otherwise send down pipe 1
-            {
-                instrALU = pipeStateIFID.exInstrA;
-                rob_tail_ALU = pipeStateIFID.rob_fill_slot_exA;
-                pc_ALU = pipeStateIFID.exPCA;
-                reg_ALU = pipeStateIFID.exregA;
-                valid_ALU = pipeStateIFID.ex_isvalA;
-                ALU_DONE = 1;
-            }
+    {   
+        // if ALU_PIPE then
+        if (pipeState.pipe_type == ALU_PIPE) {
 
-            if(!pipeStateIFID.is_jumpA_ID)
-            {
-                if (pipeStateIFID.ex_isMulDivB && MULDIV_DONE == 0)
-                {
-                    instrMULDIV = pipeStateIFID.exInstrB;
-                    is_MulDiv = pipeStateIFID.ex_isMulDivB;
-                    rob_tail_MULDIV = pipeStateIFID.rob_fill_slot_exB;
-                    pc_MULDIV = pipeStateIFID.exPCB;
-                    reg_MULDIV = pipeStateIFID.exregB;
-                    valid_MULDIV = pipeStateIFID.ex_isvalB;
-                    MULDIV_DONE = 1;
-                }
-                else if ((pipeStateIFID.ex_isloadB || pipeStateIFID.ex_isstoreB) && MEM_DONE == 0) // if is_load or is_store, send down pipe2
-                {
-                    instrMEM = pipeStateIFID.exInstrB;
-                    rob_tail_MEM = pipeStateIFID.rob_fill_slot_exB;
-                    is_load = pipeStateIFID.ex_isloadB;
-                    pc_MEM = pipeStateIFID.exPCB;
-                    reg_MEM = pipeStateIFID.exregB;
-                    valid_MEM = pipeStateIFID.ex_isvalB;
-                    MEM_DONE = 1;
-                }
-                else if (isALU_B && ALU_DONE == 0)// otherwise send down pipe 1
-                {
-                    instrALU = pipeStateIFID.exInstrB;
-                    rob_tail_ALU = pipeStateIFID.rob_fill_slot_exB;
-                    pc_ALU = pipeStateIFID.exPCB;
-                    reg_ALU = pipeStateIFID.exregB;
-                    valid_ALU = pipeStateIFID.ex_isvalB;
-                    ALU_DONE = 1;
-                }
-            }
-        }
+         // Instruction shifting
+            pipeState.cycle = CurCycle;
+            pipeState.ifInstr = instr;
+            pipeState.idInstr = pipeState_Next.idInstr;
+            pipeState.ex1Instr = pipeState_Next.ex1Instr;
+            pipeState.wbInstr = pipeState_Next.wbInstr;
 
-        if(pipeStateIFID.stall_state_EX == 2 )
-        {
-            if (pipeStateIFID.ex_isMulDivA && MULDIV_DONE == 0)
-            {
-                instrMULDIV = pipeStateIFID.exInstrA;
-                is_MulDiv = pipeStateIFID.ex_isMulDivA;
-                rob_tail_MULDIV = pipeStateIFID.rob_fill_slot_exA;
-                pc_MULDIV = pipeStateIFID.exPCA;
-                reg_MULDIV = pipeStateIFID.exregA;
-                valid_MULDIV = pipeStateIFID.ex_isvalA;
-                MULDIV_DONE = 1;
-            }
-            else if ((pipeStateIFID.ex_isloadA || pipeStateIFID.ex_isstoreA) && MEM_DONE == 0) // if is_load or is_store, send down pipe2
-            {
-                instrMEM = pipeStateIFID.exInstrA;
-                rob_tail_MEM = pipeStateIFID.rob_fill_slot_exA;
-                is_load = pipeStateIFID.ex_isloadA;
-                pc_MEM = pipeStateIFID.exPCA;
-                reg_MEM = pipeStateIFID.exregA;
-                valid_MEM = pipeStateIFID.ex_isvalA;
-                MEM_DONE = 1;
-            }
-            else if(isALU_A && ALU_DONE == 0) // otherwise send down pipe 1
-            {
-                instrALU = pipeStateIFID.exInstrA;
-                rob_tail_ALU = pipeStateIFID.rob_fill_slot_exA;
-                pc_ALU = pipeStateIFID.exPCA;
-                reg_ALU = pipeStateIFID.exregA;
-                valid_ALU = pipeStateIFID.ex_isvalA;
-                ALU_DONE = 1;
-            }
+            pipeState_Next.wbInstr = pipeState_Next.ex1Instr;
+            pipeState_Next.ex1Instr = pipeState_Next.idInstr;
+            pipeState_Next.idInstr = pipeState.ifInstr;
+
+
+            //PC setting
+            pipeState.ifPC = mips_state.pc;
+            pipeState.idPC = pipeState_Next.idPC;
+            pipeState.ex1PC = pipeState_Next.ex1PC;
+            pipeState.wbPC = pipeState_Next.wbPC;
+            
+            pipeState_Next.wbPC = pipeState_Next.ex1PC;
+            pipeState_Next.ex1PC = pipeState_Next.idPC;
+            pipeState_Next.idPC = pipeState.ifPC;
+
+            //reg setting
+            pipeState.ifreg = mips_state.reg;
+            pipeState.idreg = pipeState_Next.idreg;
+            pipeState.ex1reg = pipeState_Next.ex1reg;
+            pipeState.wbreg = pipeState_Next.wbreg;
+            
+            pipeState_Next.wbreg = pipeState_Next.ex1reg;
+            pipeState_Next.ex1reg = pipeState_Next.idreg;
+            pipeState_Next.idreg = pipeState.ifreg;
+
+            //execute setting
+
+            pipeState.IF = executed;
+            pipeState.id = pipeState_Next.id;
+            pipeState.ex1 = pipeState_Next.ex1;
+            pipeState.wb = pipeState_Next.wb;
+
+            pipeState_Next.wb = pipeState_Next.ex1;
+            pipeState_Next.ex1 = pipeState_Next.id;
+            pipeState_Next.id = pipeState.IF;
+
+            // ROB fill slots
+            pipeState.rob_fill_slot_if = rob_tail;
+            pipeState.rob_fill_slot_id = pipeState_Next.rob_fill_slot_id;
+            pipeState.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_ex1;
+            pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
+
+            pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex1;
+            pipeState_Next.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_id;
+            pipeState_Next.rob_fill_slot_id = pipeState.rob_fill_slot_if;
+
+
+            // iNSTRUCTION Valid
+            pipeState.if_isval = (instr != NOP);
+            pipeState.id_isval = pipeState_Next.id_isval;
+            pipeState.ex1_isval = pipeState_Next.ex1_isval;
+            pipeState.wb_isval = pipeState_Next.wb_isval;
+
+            pipeState_Next.wb_isval = pipeState_Next.ex1_isval;
+            pipeState_Next.ex1_isval = pipeState_Next.id_isval;
+            pipeState_Next.id_isval = pipeState.if_isval;
+
+    
+        } else if (pipeState.pipe_type == MEM_PIPE) {
+
+            // Instruction shifting
+            pipeState.cycle = CurCycle;
+            pipeState.ifInstr = instr;
+            pipeState.idInstr = pipeState_Next.idInstr;
+            pipeState.ex1Instr = pipeState_Next.ex1Instr;
+            pipeState.ex2Instr = pipeState_Next.ex2Instr;
+            pipeState.wbInstr = pipeState_Next.wbInstr;
+
+            pipeState_Next.wbInstr = pipeState_Next.ex2Instr;
+            pipeState_Next.ex2Instr = pipeState_Next.ex1Instr;
+            pipeState_Next.ex1Instr = pipeState_Next.idInstr;
+            pipeState_Next.idInstr = pipeState.ifInstr;
+
+            //PC setting
+            pipeState.ifPC = mips_state.pc;
+            pipeState.idPC = pipeState_Next.idPC;
+            pipeState.ex1PC = pipeState_Next.ex1PC;
+            pipeState.ex2PC = pipeState_Next.ex2PC;
+            pipeState.wbPC = pipeState_Next.wbPC;
+            
+            pipeState_Next.wbPC = pipeState_Next.ex2PC;
+            pipeState_Next.ex2PC = pipeState_Next.ex1PC;
+            pipeState_Next.ex1PC = pipeState_Next.idPC;
+            pipeState_Next.idPC = pipeState.ifPC;
+
+            //reg setting
+            pipeState.ifreg = mips_state.reg;
+            pipeState.idreg = pipeState_Next.idreg;
+            pipeState.ex1reg = pipeState_Next.ex1reg;
+            pipeState.ex2reg = pipeState_Next.ex2reg;
+            pipeState.wbreg = pipeState_Next.wbreg;
+            
+            pipeState_Next.wbreg = pipeState_Next.ex2reg;
+            pipeState_Next.ex2reg = pipeState_Next.ex1reg;
+            pipeState_Next.ex1reg = pipeState_Next.idreg;
+            pipeState_Next.idreg = pipeState.ifreg;
+
+            //execute setting
+
+            pipeState.IF = executed;
+            pipeState.id = pipeState_Next.id;
+            pipeState.ex1 = pipeState_Next.ex1;
+            pipeState.ex2 = pipeState_Next.ex2;
+            pipeState.wb = pipeState_Next.wb;
+
+            pipeState_Next.wb = pipeState_Next.ex2;
+            pipeState_Next.ex2 = pipeState_Next.ex1;
+            pipeState_Next.ex1 = pipeState_Next.id;
+            pipeState_Next.id = pipeState.IF;
+
+            //is_load
+            pipeState.if_isload = is_load;
+            pipeState.id_isload = pipeState_Next.id_isload;
+            pipeState.ex1_isload = pipeState_Next.ex1_isload;
+            pipeState.ex2_isload = pipeState_Next.ex2_isload;
+            
+            pipeState_Next.ex2_isload = pipeState_Next.ex1_isload;
+            pipeState_Next.ex1_isload = pipeState_Next.id_isload;
+            pipeState_Next.id_isload = pipeState.if_isload;
+
+            // ROB fill slots
+            pipeState.rob_fill_slot_if = rob_tail;
+            pipeState.rob_fill_slot_id = pipeState_Next.rob_fill_slot_id;
+            pipeState.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_ex1;
+            pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
+            pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
+
+            pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex2;
+            pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
+            pipeState_Next.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_id;
+            pipeState_Next.rob_fill_slot_id = pipeState.rob_fill_slot_if;
+
+            // iNSTRUCTION Valid
+            pipeState.if_isval = (instr != NOP);
+            pipeState.id_isval = pipeState_Next.id_isval;
+            pipeState.ex1_isval = pipeState_Next.ex1_isval;
+            pipeState.ex2_isval = pipeState_Next.ex2_isval;
+            pipeState.wb_isval = pipeState_Next.wb_isval;
+
+            pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
+            pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
+            pipeState_Next.ex1_isval = pipeState_Next.id_isval;
+            pipeState_Next.id_isval = pipeState.if_isval;
+
+
+
+        } else if (pipeState.pipe_type == MULDIV_PIPE) {
+
+        
+            // Instruction shifting
+            pipeState.cycle = CurCycle;
+            pipeState.ifInstr = instr;
+            pipeState.idInstr = pipeState_Next.idInstr;
+            pipeState.ex1Instr = pipeState_Next.ex1Instr;
+            pipeState.ex2Instr = pipeState_Next.ex2Instr;
+            pipeState.ex3Instr = pipeState_Next.ex3Instr;
+            pipeState.ex4Instr = pipeState_Next.ex4Instr;
+            pipeState.wbInstr = pipeState_Next.wbInstr;
+
+            pipeState_Next.wbInstr = pipeState_Next.ex4Instr;
+            pipeState_Next.ex4Instr = pipeState_Next.ex3Instr;
+            pipeState_Next.ex3Instr = pipeState_Next.ex2Instr;
+            pipeState_Next.ex2Instr = pipeState_Next.ex1Instr;
+            pipeState_Next.ex1Instr = pipeState_Next.idInstr;
+            pipeState_Next.idInstr = pipeState.ifInstr;
+
+            //PC setting
+            pipeState.ifPC = mips_state.pc;
+            pipeState.idPC = pipeState_Next.idPC;
+            pipeState.ex1PC = pipeState_Next.ex1PC;
+            pipeState.ex2PC = pipeState_Next.ex2PC;
+            pipeState.ex3PC = pipeState_Next.ex3PC;
+            pipeState.ex4PC = pipeState_Next.ex4PC;
+            pipeState.wbPC = pipeState_Next.wbPC;
+            
+            pipeState_Next.wbPC = pipeState_Next.ex4PC;
+            pipeState_Next.ex4PC = pipeState_Next.ex3PC;
+            pipeState_Next.ex3PC = pipeState_Next.ex2PC;
+            pipeState_Next.ex2PC = pipeState_Next.ex1PC;
+            pipeState_Next.ex1PC = pipeState_Next.idPC;
+            pipeState_Next.idPC = pipeState.ifPC;
+
+            //reg setting
+            pipeState.ifreg = mips_state.reg;
+            pipeState.idreg = pipeState_Next.idreg;
+            pipeState.ex1reg = pipeState_Next.ex1reg;
+            pipeState.ex2reg = pipeState_Next.ex2reg;
+            pipeState.ex3reg = pipeState_Next.ex3reg;
+            pipeState.ex4reg = pipeState_Next.ex4reg;
+            pipeState.wbreg = pipeState_Next.wbreg;
+            
+            pipeState_Next.wbreg = pipeState_Next.ex4reg;
+            pipeState_Next.ex4reg = pipeState_Next.ex3reg;
+            pipeState_Next.ex3reg = pipeState_Next.ex2reg;
+            pipeState_Next.ex2reg = pipeState_Next.ex1reg;
+            pipeState_Next.ex1reg = pipeState_Next.idreg;
+            pipeState_Next.idreg = pipeState.ifreg;
+
+            //execute setting
+
+            pipeState.IF = executed;
+            pipeState.id = pipeState_Next.id;
+            pipeState.ex1 = pipeState_Next.ex1;
+            pipeState.ex2 = pipeState_Next.ex2;
+            pipeState.ex3 = pipeState_Next.ex3;
+            pipeState.ex4 = pipeState_Next.ex4;
+            pipeState.wb = pipeState_Next.wb;
+
+            pipeState_Next.wb = pipeState_Next.ex4;
+            pipeState_Next.ex4 = pipeState_Next.ex3;
+            pipeState_Next.ex3 = pipeState_Next.ex2;
+            pipeState_Next.ex2 = pipeState_Next.ex1;
+            pipeState_Next.ex1 = pipeState_Next.id;
+            pipeState_Next.id = pipeState.IF;
+
+            //is_mulDiv
+            pipeState.if_isMulDiv = is_mulDiv;
+            pipeState.id_isMulDiv = pipeState_Next.id_isMulDiv;
+            pipeState.ex1_isMulDiv = pipeState_Next.ex1_isMulDiv;
+            pipeState.ex2_isMulDiv = pipeState_Next.ex2_isMulDiv;
+            pipeState.ex3_isMulDiv = pipeState_Next.ex3_isMulDiv;
+
+            pipeState_Next.ex3_isMulDiv = pipeState_Next.ex2_isMulDiv;
+            pipeState_Next.ex2_isMulDiv = pipeState_Next.ex1_isMulDiv;
+            pipeState_Next.ex1_isMulDiv = pipeState_Next.id_isMulDiv;
+            pipeState_Next.id_isMulDiv = pipeState.if_isMulDiv;
+
+            // ROB fill slots
+            pipeState.rob_fill_slot_if = rob_tail;
+            pipeState.rob_fill_slot_id = pipeState_Next.rob_fill_slot_id;
+            pipeState.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_ex1;
+            pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
+            pipeState.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex3;
+            pipeState.rob_fill_slot_ex4 = pipeState_Next.rob_fill_slot_ex4;
+            pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
+
+            pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex4;
+            pipeState_Next.rob_fill_slot_ex4 = pipeState_Next.rob_fill_slot_ex3;
+            pipeState_Next.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex2;
+            pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
+            pipeState_Next.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_id;
+            pipeState_Next.rob_fill_slot_id = pipeState.rob_fill_slot_if;
+
+
+
+            // iNSTRUCTION Valid
+            pipeState.if_isval = (instr != NOP);
+            pipeState.id_isval = pipeState_Next.id_isval;
+            pipeState.ex1_isval = pipeState_Next.ex1_isval;
+            pipeState.ex2_isval = pipeState_Next.ex2_isval;
+            pipeState.ex3_isval = pipeState_Next.ex3_isval;
+            pipeState.ex4_isval = pipeState_Next.ex4_isval;
+            pipeState.wb_isval = pipeState_Next.wb_isval;
+
+            pipeState_Next.wb_isval = pipeState_Next.ex4_isval;
+            pipeState_Next.ex4_isval = pipeState_Next.ex3_isval;
+            pipeState_Next.ex3_isval = pipeState_Next.ex2_isval;
+            pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
+            pipeState_Next.ex1_isval = pipeState_Next.id_isval;
+            pipeState_Next.id_isval = pipeState.if_isval;
+
+        } else {
+            cerr << "Invalid Pipe Type. Choose between 1: ALU, 2: MEM, 3: MULDIV." << endl;
         }
-        // now update only B
-        if(pipeStateIFID.stall_state_EX == 1 )
-        {
-            if (pipeStateIFID.ex_isMulDivB && MULDIV_DONE == 0)
-            {
-                instrMULDIV = pipeStateIFID.exInstrB;
-                is_MulDiv = pipeStateIFID.ex_isMulDivB;
-                rob_tail_MULDIV = pipeStateIFID.rob_fill_slot_exB;
-                pc_MULDIV = pipeStateIFID.exPCB;
-                reg_MULDIV = pipeStateIFID.exregB;
-                valid_MULDIV = pipeStateIFID.ex_isvalB;
-                MULDIV_DONE = 1;
-            }
-            else if ((pipeStateIFID.ex_isloadB || pipeStateIFID.ex_isstoreB) && MEM_DONE == 0) // if is_load or is_store, send down pipe2
-            {
-                instrMEM = pipeStateIFID.exInstrB;
-                rob_tail_MEM = pipeStateIFID.rob_fill_slot_exB;
-                is_load = pipeStateIFID.ex_isloadB;
-                pc_MEM = pipeStateIFID.exPCB;
-                reg_MEM = pipeStateIFID.exregB;
-                valid_MEM = pipeStateIFID.ex_isvalB;
-                MEM_DONE = 1;
-            }
-            else if (isALU_B && ALU_DONE == 0)// otherwise send down pipe 1
-            {
-                instrALU = pipeStateIFID.exInstrB;
-                rob_tail_ALU = pipeStateIFID.rob_fill_slot_exB;
-                pc_ALU = pipeStateIFID.exPCB;
-                reg_ALU = pipeStateIFID.exregB;
-                valid_ALU = pipeStateIFID.ex_isvalB;
-                ALU_DONE = 1;
-            }
-        }
-        // update all pipes for ex and later stages
-        moveOneCycleMULDIV(pipeStateMULDIV, pipeState_NextMULDIV, instrMULDIV, executed, is_MulDiv, rob_tail_MULDIV, pc_MULDIV, reg_MULDIV, valid_MULDIV);
-        moveOneCycleALU(pipeStateALU, pipeState_NextALU, instrALU, executed, rob_tail_ALU, pc_ALU, reg_ALU, valid_ALU);
-        moveOneCycleMEM(pipeStateMEM, pipeState_NextMEM, instrMEM, executed, is_load, rob_tail_MEM, pc_MEM, reg_MEM, valid_MEM);
 
     }
-    //Dont make any updates if stall is 1. Just move post ex1 everything one cycle up
-    else
+
+    if(stalling == 1)
     {
-        moveStalledMULDIV(pipeStateMULDIV, pipeState_NextMULDIV);
-        moveStalledALU(pipeStateALU, pipeState_NextALU);
-        moveStalledMEM(pipeStateMEM, pipeState_NextMEM);
+        if (pipeState.pipe_type == ALU_PIPE) {
+
+            pipeState.cycle = CurCycle;
+            pipeState.wbInstr = pipeState.ex1Instr;
+
+            pipeState_Next.wbInstr =  pipeState.ex1Instr;
+
+            // ROB fill slots
+            pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
+
+            pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex1;
+
+            // iNSTRUCTION Valid
+            pipeState.ex2_isval = pipeState_Next.ex2_isval;
+            pipeState.wb_isval = pipeState_Next.wb_isval;
+
+            pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
+            pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
+
+        } else if (pipeState.pipe_type == MEM_PIPE) {
+
+            pipeState.cycle = CurCycle;
+            pipeState.wbInstr = pipeState.ex2Instr;
+            pipeState.ex2Instr = pipeState.ex1Instr;
+
+            pipeState_Next.wbInstr =  pipeState.ex2Instr;
+
+            // ROB fill slots
+            pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
+            pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
+
+            pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex2;
+            pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
+
+            // iNSTRUCTION Valid
+            pipeState.ex2_isval = pipeState_Next.ex2_isval;
+            pipeState.wb_isval = pipeState_Next.wb_isval;
+
+            pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
+            pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
+
+        } else if (pipeState.pipe_type == MULDIV_PIPE) {
+
+            pipeState.cycle = CurCycle;
+            pipeState.wbInstr = pipeState.ex4Instr;
+            pipeState.ex4Instr = pipeState.ex3Instr;
+            pipeState.ex3Instr = pipeState.ex2Instr;
+            pipeState.ex2Instr = pipeState.ex1Instr;
+
+            pipeState_Next.wbInstr =  pipeState.ex4Instr;
+            pipeState_Next.ex4Instr =  pipeState.ex3Instr;
+            pipeState_Next.ex3Instr = pipeState.ex2Instr;
+
+
+            // ROB fill slots
+            pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
+            pipeState.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex3;
+            pipeState.rob_fill_slot_ex4 = pipeState_Next.rob_fill_slot_ex4;
+            pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
+
+            pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex4;
+            pipeState_Next.rob_fill_slot_ex4 = pipeState_Next.rob_fill_slot_ex3;
+            pipeState_Next.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex2;
+            pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
+
+
+            // iNSTRUCTION Valid
+            pipeState.ex2_isval = pipeState_Next.ex2_isval;
+            pipeState.ex3_isval = pipeState_Next.ex3_isval;
+            pipeState.ex4_isval = pipeState_Next.ex4_isval;
+            pipeState.wb_isval = pipeState_Next.wb_isval;
+
+            pipeState_Next.wb_isval = pipeState_Next.ex4_isval;
+            pipeState_Next.ex4_isval = pipeState_Next.ex3_isval;
+            pipeState_Next.ex3_isval = pipeState_Next.ex2_isval;
+            pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
+            
+        } else {
+            cerr << "Invalid Pipe Type. Choose between 1: ALU, 2: MEM, 3: MULDIV." << endl;
+        }
+
     }
 }
 
 void initPipeline(PipeState_Next &pipeState_Next)
 {
+    pipeState_Next.idInstr = 0x0;
     pipeState_Next.ex1Instr = 0x0;
     pipeState_Next.ex2Instr = 0x0;
     pipeState_Next.ex3Instr = 0x0;
     pipeState_Next.ex4Instr = 0x0;
     pipeState_Next.wbInstr = 0x0;
 
+    pipeState_Next.idPC = 0x1;
     pipeState_Next.ex1PC = 0x1;
     pipeState_Next.ex2PC = 0x1;
     pipeState_Next.ex3PC = 0x1;
     pipeState_Next.ex4PC = 0x1;
     pipeState_Next.wbPC = 0x1;
     
+    pipeState_Next.id = 1;
     pipeState_Next.ex1 = 1;
     pipeState_Next.ex2 = 1;
     pipeState_Next.ex3 = 1;
@@ -963,82 +548,7 @@ void initPipeline(PipeState_Next &pipeState_Next)
     pipeState_Next.ex3_isval = false;
     pipeState_Next.ex2_isval = false;
     pipeState_Next.ex1_isval = false;
-
-}
-
-void initPipelineIFID(PipeStateIFID &pipeStateIFID)
-{
-    pipeStateIFID.cycle = 0;
-
-    pipeStateIFID.ifInstrA = NOP;
-    pipeStateIFID.ifInstrB = NOP;
-
-    pipeStateIFID.idInstrA = NOP;
-    pipeStateIFID.idInstrB = NOP;
-
-    pipeStateIFID.exInstrA = NOP;
-    pipeStateIFID.exInstrB = NOP;
-
-    //Push PC
-    pipeStateIFID.ifPCA = 0x1;
-    pipeStateIFID.idPCA = 0x1;
-    pipeStateIFID.exPCA = 0x1;
-
-    pipeStateIFID.ifPCB = 0x1;
-    pipeStateIFID.idPCB = 0x1;
-    pipeStateIFID.exPCB = 0x1;
-
-    //push execute
-    pipeStateIFID.IFA = 1;
-    pipeStateIFID.IDA = 1;
-    pipeStateIFID.ex1A = 1;
-
-    pipeStateIFID.IFB = 0;
-    pipeStateIFID.IDB = 0;
-    pipeStateIFID.ex1B = 0;
-
-    // Instruction is valid - for ROB
-    pipeStateIFID.if_isvalA  = false;
-    pipeStateIFID.id_isvalA = false;
-    pipeStateIFID.ex_isvalA = false;
-
-    pipeStateIFID.if_isvalB = false;
-    pipeStateIFID.id_isvalB = false;
-    pipeStateIFID.ex_isvalB = false;
-
-    //Hazard
-    pipeStateIFID.is_hazard_IF = 0;
-    pipeStateIFID.is_hazard_ID = 0;
-    pipeStateIFID.is_hazard_EX = 0;
-
-    //Stall state, keeps a note of whether to stall or and for how many cycles for a hazard
-    pipeStateIFID.stall_state_EX = 0;
-    pipeStateIFID.stall_state_ID = 0;
-    pipeStateIFID.stall_state_IF = 0;
-
-    pipeStateIFID.rob_fill_slot_ifA = 0;
-    pipeStateIFID.rob_fill_slot_idA = 0;
-    pipeStateIFID.rob_fill_slot_exA = 0;
-
-    pipeStateIFID.rob_fill_slot_ifB = 0;
-    pipeStateIFID.rob_fill_slot_idB = 0;
-    pipeStateIFID.rob_fill_slot_exB = 0;
-
-    pipeStateIFID.is_jumpA_IF = 0;
-    pipeStateIFID.is_jumpA_ID = 0;
-    pipeStateIFID.is_jumpA_EX = 0;
-
-    pipeStateIFID.is_jumpB_IF = 0;
-    pipeStateIFID.is_jumpB_ID = 0;
-    pipeStateIFID.is_jumpB_EX = 0;
-
-    pipeStateIFID.is_branchA_IF = 0;
-    pipeStateIFID.is_branchA_ID = 0;
-    pipeStateIFID.is_branchA_EX = 0;
-
-    pipeStateIFID.is_branchB_IF = 0;
-    pipeStateIFID.is_branchB_ID = 0;
-    pipeStateIFID.is_branchB_EX = 0;
+    pipeState_Next.id_isval = false;
 
 }
 
@@ -1055,7 +565,20 @@ void initROB(ROBState &robState)
         robState.pending[i] = false;
         robState.preg[i] = 0;
     }
+}
 
+void initDiagram(DiagramState &dstate)
+{
+    dstate.cycles = 0;
+    dstate.num_instrs = 0;
+    for (int i = 0; i < DIAGRAM_SIZE; i += 1) {
+        dstate.instr[i].instr = NOP;
+        dstate.instr[i].done = true;
+        dstate.instr[i].commit_cycle = 0;
+        for (int j = 0; j < DIAGRAM_CYCLES; j += 1) {
+            dstate.instr[i].stage[j] = "--";
+        }
+    }
 }
 
 //Byte's the smallest thing that can hold the opcode...
@@ -1403,7 +926,7 @@ static void printInstr(uint32_t curInst, ostream & pipeState)
     }
 }
 
-void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState, PipeStateIFID & pipeStateIFID)
+void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState)
 {
 
     ofstream pipe_out("pipe_state.out", ios::app);
@@ -1412,23 +935,29 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
     {
 
         pipe_out << "####################################################" << endl;
-        pipe_out << "Cycle: " << pipeStateIFID.cycle << " IF : "<< pipeStateIFID.stall_state_IF <<" ID : " << pipeStateIFID.stall_state_ID <<" EX : " << pipeStateIFID.stall_state_EX <<" " <<endl;
+        pipe_out << "Cycle: " << stateALU.cycle << endl;
         pipe_out << "####################################################" << endl;
         pipe_out << "|";
-        pipe_out << "\t  IF \t \t   |\t  ID \t \t   | " << endl;
-
-        pipe_out << "| ";
-        printInstr(pipeStateIFID.ifInstrA, pipe_out);
+        pipe_out << "\t \t  IF \t \t \t  |  \t \t ID  \t \t \t | " << endl;
         pipe_out << "|";
-        printInstr(pipeStateIFID.idInstrA, pipe_out);
-        pipe_out << "|" << endl;
-
-        pipe_out << "| ";
-        printInstr(pipeStateIFID.ifInstrB, pipe_out);
+        if (stateALU.if_isval) {
+            printInstr(stateALU.ifInstr, pipe_out);
+        } else if (stateMEM.if_isval) {
+            printInstr(stateMEM.ifInstr, pipe_out);
+        } else if (stateMULDIV.if_isval) {
+            printInstr(stateMULDIV.ifInstr, pipe_out);
+        } else {
+            pipe_out << "\t \t   nop\t\t\t ";
+        }
         pipe_out << "|";
-        printInstr(pipeStateIFID.idInstrB, pipe_out);
+        if (stateALU.id_isval) {
+            printInstr(stateALU.idInstr, pipe_out);
+        } else if (stateMEM.id_isval) {
+            printInstr(stateMEM.idInstr, pipe_out);
+        } else if (stateMULDIV.id_isval) {
+            printInstr(stateMULDIV.idInstr, pipe_out);
+        }
         pipe_out << "|" << endl;
-
         pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
         pipe_out << "ALU Pipe: " << endl;
         pipe_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
@@ -1510,5 +1039,23 @@ void dumpROBState(ROBState & robState)
     else
     {
         cerr << "Could not open pipe state file!" << endl;
+    }
+}
+
+
+void dumpPipeDiagram(DiagramState & dstate)
+{
+
+    ofstream diagram_out("pipe_diagram.out", ios::app);
+
+    if(diagram_out)
+    {
+
+        diagram_out << "####################################################" << endl;
+
+    }
+    else
+    {
+        cerr << "Could not open pipe diagram file!" << endl;
     }
 }

@@ -16,6 +16,7 @@ using namespace std;
 
 #define ROB_SIZE 16
 
+
 struct PipeState
 {
 
@@ -172,6 +173,8 @@ struct ROBState {
     uint32_t commit_instr;
 
 };
+
+
 
 void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState);
 void dumpROBState(ROBState & robState);

@@ -2,7 +2,7 @@
 #include <iostream>
 using namespace std;
 
-void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv, bool &is_jump, bool &is_branch, bool&is_R, bool &is_md_non_stall){
+void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv, bool &is_md_non_stall){
 
 	// uint32_t instr = mips_state.ram[mips_state.pc];
 	// uint32_t opcode = (mips_state.ram[mips_state.pc] >> 26) & 0x0000003F;
@@ -11,18 +11,15 @@ void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv, 
 	// uint32_t rd ;
 	// uint32_t rt = (instr & 0x001F0000) >> 16; 
 	// uint32_t rs = (instr & 0x03E00000) >> 21; 
-	is_R = false;
+
+	is_mulDiv = false;
+	is_md_non_stall = false;
+
 	if(!executed && decode.opcode_R == 0x00000000){
-		is_jump = false;
-		is_mulDiv = false;
-		is_md_non_stall = false;	
-		is_branch = false; 
-		is_R = true;
 		switch(decode.funct_field){
 			
 			case 0x00000009:
 					jalr(mips_state, decode.rs, decode.rt, decode.rd);
-					is_jump = true;
 					executed = true;
 					return;			
 			case 0x00000020:
@@ -39,7 +36,6 @@ void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv, 
 					return;
 			case 0x00000008:
 					jr(mips_state,decode.rs);
-					is_jump = true;
 					executed = true;
 					return;
 			case 0x00000025:
@@ -129,8 +125,6 @@ void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv, 
 					executed = true;
 					return;
 			default:
-					is_R = false;
-					executed = false;
 					return;
 		}
 	}

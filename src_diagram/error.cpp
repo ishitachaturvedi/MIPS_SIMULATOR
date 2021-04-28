@@ -18,10 +18,8 @@ void checkExec(const std::vector<int32_t>& reg, uint32_t addr){
 void checkExit(const std::vector<int32_t>& reg, uint32_t addr, int CurCycle)
 {
 	if(addr == ADDR_NULL){
-		cout << "IN EXIT \n";
 		uint32_t out = reg[2] & 0x000000FF;
-		cout << "OUT EXIT \n";
-		cout <<CurCycle << " \n";
+		cout << "NORMAL EXIT "<<CurCycle << " \n";
 		std::exit(out);
 	}
 	// if(((addr < ADDR_INSTR) || (addr > (ADDR_INSTR + ADDR_INSTR_L - 1))) && (addr != ADDR_NULL)){

@@ -15,6 +15,8 @@ static void handleJInst(uint32_t instr, std::ostream & out_stream);
 #define MULDIV_PIPE 3
 
 #define ROB_SIZE 16
+#define DIAGRAM_SIZE 50
+#define DIAGRAM_CYCLES 50
 
 #define NOP 0x00000000
 

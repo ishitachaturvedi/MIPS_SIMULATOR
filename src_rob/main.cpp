@@ -137,8 +137,7 @@ int main(int argc, char* argv[]){
 					robState.tail += 1;
 				} else {
 					robState.tail = 0;
-				}
-				
+				}				
 			}
 
 			// ROB Fill
@@ -160,14 +159,11 @@ int main(int argc, char* argv[]){
 				stalling = 0;
 			}
 
-
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
 			//dumpROBState(robState);
 			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
-
-
 
 			CurCycle = CurCycle + 1;
 
@@ -183,9 +179,8 @@ int main(int argc, char* argv[]){
 			}		
 			
 		};
-
     }
-//
+
 	catch (const int EXIT_CODE){		//Exceptions and Errors are caught here
 		cout << CurCycle << " \n";
 		switch(EXIT_CODE){

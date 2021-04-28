@@ -2,11 +2,7 @@
 #include <iostream>
 using namespace std;
 
-void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load, bool& is_store, bool& is_branch, bool&is_I, bool is_start){
-	is_I = false;
-	is_load = false;
-	is_store = false;
-	is_branch = false;
+void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load, bool& is_store){
 	if(!executed){
 		// uint32_t instr = mips_state.ram[mips_state.pc];
 
@@ -26,8 +22,9 @@ void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load, bo
 		// 	SignExtImm = immediate;
 		// }
 
-		is_I = true;
-
+		is_load = false;
+		is_store = false;
+ 
 		switch(decode.opcode){
 			case 0x00000008:
 				addi(mips_state, decode.rs, decode.rt, decode.SignExtImm);
@@ -42,11 +39,11 @@ void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load, bo
 				executed = true;
 				return;
 			case 0x00000004:
-				beq(mips_state, decode.rs, decode.rt, decode.SignExtImm, is_branch, is_start);
+				beq(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
 				return;
 			case 0x00000005:
-				bne(mips_state, decode.rs, decode.rt, decode.SignExtImm, is_branch, is_start);
+				bne(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
 				return;
 			case 0x00000024:
@@ -121,20 +118,19 @@ void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load, bo
 				executed = true;
 				return;
 			case 0x00000007:
-				bgtz(mips_state, decode.rs, decode.rt, decode.SignExtImm, is_branch, is_start);
+				bgtz(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
 				return;
 			case 0x00000006:
-				blez(mips_state, decode.rs, decode.rt, decode.SignExtImm, is_branch, is_start);
+				blez(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
 				return;
 			case 0x00000001:
-				bdecoder(mips_state, decode.rs, decode.rt, decode.SignExtImm, is_branch, is_start);
+				bdecoder(mips_state, decode.rs, decode.rt, decode.SignExtImm);
 				executed = true;
 				return;
 			default:
 				executed = false;
-				is_I = false;
 				return;
 		}
 	}	
@@ -166,28 +162,20 @@ void andi(State& mips_state, uint32_t rs, uint32_t rt, int32_t immediate){
 	++mips_state.npc;
 }
 
-void beq(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool& is_branch, bool is_start){
+void beq(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 	if(mips_state.reg[rt] == mips_state.reg[rs]){
-		//if (is_start)
-			mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
-		is_branch = true;
 	}
 	else{
 		++mips_state.npc;
 	}
 }
 
-void bne(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool& is_branch, bool is_start){
+void bne(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 	if(mips_state.reg[rt] != mips_state.reg[rs]){
-		//if (is_start)
-		//cout <<" branch taken\n";
-			mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
-		is_branch = true;
 	}
 	else{
-		//cout<<" branch not taken\n";
 		++mips_state.npc;
 	}
 }
@@ -550,43 +538,34 @@ void sw(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		++mips_state.npc;
 	}
 
-void bgez(State& mips_state, uint32_t rs, int32_t SignExtImm, bool& is_branch, bool is_start){
+void bgez(State& mips_state, uint32_t rs, int32_t SignExtImm){
 	if(mips_state.reg[rs] >= 0){
-		//if (is_start)
-			mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
-		is_branch = true;
 	}
 	else{
 		++mips_state.npc;
 	}
 }
 
-void bgezal(State& mips_state, uint32_t rs, int32_t SignExtImm, bool& is_branch, bool is_start){
+void bgezal(State& mips_state, uint32_t rs, int32_t SignExtImm){
 	int32_t temp = mips_state.reg[rs];
 	//Regardless of whether the condition is true, the return address needs to be set
 	mips_state.reg[31] = (mips_state.pc * 4) + 8;
 	if(temp >= 0){
-		//if (is_start)
-			mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
-		is_branch = true;
 	}
 	else{
 		++mips_state.pc;
 	}
 }
 
-void bgtz(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool& is_branch, bool is_start){
+void bgtz(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		if(rt != 0x00000000){
 			throw (static_cast<int>(Exception::INSTRUCTION));
 		}
 		else{
 			if(mips_state.reg[rs] > 0){
-				//if (is_start)
-					mips_state.npc = mips_state.npc + 1;
 				mips_state.npc += SignExtImm;
-				is_branch = true;
 			}
 			else{
 				++mips_state.npc;
@@ -594,7 +573,7 @@ void bgtz(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool&
 		}
 	}
 
-void blez(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool& is_branch, bool is_start){
+void blez(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 		int32_t temp = mips_state.reg[rs];
 		if(rt != 0){
 			throw (static_cast<int>(Exception::INSTRUCTION));
@@ -602,10 +581,7 @@ void blez(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool&
 
 		else{
 			if(temp <= 0x00000000){
-				//if (is_start)
-					mips_state.npc = mips_state.npc + 1;
 				mips_state.npc += SignExtImm;
-				is_branch = true;
 			}
 			else{
 				++mips_state.npc;
@@ -613,47 +589,41 @@ void blez(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool&
 		}
 	}
 
-void bltz(State& mips_state, uint32_t rs, int32_t SignExtImm, bool& is_branch, bool is_start){
+void bltz(State& mips_state, uint32_t rs, int32_t SignExtImm){
 	int32_t temp = mips_state.reg[rs];
 	if(temp < 0){
-		//if (is_start)
-			mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
-		is_branch = true;
 	}
 	else{
 		++mips_state.npc;
 	}
 }
 
-void bltzal(State& mips_state, uint32_t rs, int32_t SignExtImm, bool& is_branch, bool is_start){
+void bltzal(State& mips_state, uint32_t rs, int32_t SignExtImm){
 	int32_t temp = mips_state.reg[rs];
 	//Regardless of whether the conditions is true, the return address hars to be set
 	mips_state.reg[31] = (mips_state.pc * 4) + 8;
 	if(temp < 0){
-		//if (is_start)
-			mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
-		is_branch = true;
 	}
 	else{
 		++mips_state.npc;
 	}
 }
 	
-void bdecoder(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool& is_branch, bool is_start){
+void bdecoder(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 	switch(rt){
 		case 0x00000001:
-			bgez(mips_state, rs, SignExtImm, is_branch, is_start);
+			bgez(mips_state, rs, SignExtImm);
 			return;
 		case 0x00000011:
-			bgezal(mips_state, rs, SignExtImm, is_branch, is_start);
+			bgezal(mips_state, rs, SignExtImm);
 			return;
 		case 0x00000000:
-			bltz(mips_state, rs, SignExtImm, is_branch, is_start);
+			bltz(mips_state, rs, SignExtImm);
 			return;
 		case 0x00000010:
-			bltzal(mips_state, rs, SignExtImm, is_branch, is_start);
+			bltzal(mips_state, rs, SignExtImm);
 			return;
 		default:
 			throw (static_cast<int>(Exception::INSTRUCTION));

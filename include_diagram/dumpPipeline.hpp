@@ -15,8 +15,9 @@
 using namespace std;
 
 #define ROB_SIZE 16
+#define DIAGRAM_SIZE 50
+#define DIAGRAM_CYCLES 50
 
-#define NOP 0x00000000
 
 struct PipeState
 {
@@ -25,6 +26,8 @@ struct PipeState
     int pipe_type;
 
     //Push instructions
+    uint32_t ifInstr;
+    uint32_t idInstr;
     uint32_t ex1Instr;
     uint32_t ex2Instr;
     uint32_t ex3Instr;
@@ -32,6 +35,8 @@ struct PipeState
     uint32_t wbInstr;
 
     //Push PC
+    uint32_t ifPC;
+    uint32_t idPC;
     uint32_t ex1PC;
     uint32_t ex2PC;
     uint32_t ex3PC;
@@ -39,6 +44,8 @@ struct PipeState
     uint32_t wbPC;
 
     //Push Reg
+    std::vector<int32_t> ifreg;
+    std::vector<int32_t> idreg;
     std::vector<int32_t> ex1reg;
     std::vector<int32_t> ex2reg;
     std::vector<int32_t> ex3reg;
@@ -46,6 +53,8 @@ struct PipeState
     std::vector<int32_t> wbreg;
 
     //push execute
+    bool IF;
+    bool id;
     bool ex1;
     bool ex2;
     bool ex3;
@@ -53,17 +62,23 @@ struct PipeState
     bool wb;
 
     //push load
+    bool if_isload;
+    bool id_isload;
     bool ex1_isload;
     bool ex2_isload;
     bool ex3_isload;
     bool ex4_isload;
 
     //push mulDiv
+    bool if_isMulDiv;
+    bool id_isMulDiv;
     bool ex1_isMulDiv;
     bool ex2_isMulDiv;
     bool ex3_isMulDiv;
 
     // ROB Fill slots
+    uint32_t rob_fill_slot_if;
+    uint32_t rob_fill_slot_id;
     uint32_t rob_fill_slot_ex1;
     uint32_t rob_fill_slot_ex2;
     uint32_t rob_fill_slot_ex3;
@@ -71,6 +86,8 @@ struct PipeState
     uint32_t rob_fill_slot_wb;
 
     // Instruction is valid - for ROB
+    bool if_isval;
+    bool id_isval;
     bool ex1_isval;
     bool ex2_isval;
     bool ex3_isval;
@@ -83,6 +100,7 @@ struct PipeState_Next
 {
 
     //Push instructions
+    uint32_t idInstr;
     uint32_t ex1Instr;
     uint32_t ex2Instr;
     uint32_t ex3Instr;
@@ -90,6 +108,7 @@ struct PipeState_Next
     uint32_t wbInstr;
     
     //Push PC
+    uint32_t idPC;
     uint32_t ex1PC;
     uint32_t ex2PC;
     uint32_t ex3PC;
@@ -97,6 +116,7 @@ struct PipeState_Next
     uint32_t wbPC;
 
     //Push Reg
+    std::vector<int32_t> idreg;
     std::vector<int32_t> ex1reg;
     std::vector<int32_t> ex2reg;
     std::vector<int32_t> ex3reg;
@@ -104,6 +124,7 @@ struct PipeState_Next
     std::vector<int32_t> wbreg;
 
     //push execute
+    bool id;
     bool ex1;
     bool ex2;
     bool ex3;
@@ -111,17 +132,20 @@ struct PipeState_Next
     bool wb;
 
     //push load
+    bool id_isload;
     bool ex1_isload;
     bool ex2_isload;
     bool ex3_isload;
     bool ex4_isload;
 
     //push mulDiv
+    bool id_isMulDiv;
     bool ex1_isMulDiv;
     bool ex2_isMulDiv;
     bool ex3_isMulDiv;
 
     // ROB Fill slots
+    uint32_t rob_fill_slot_id;
     uint32_t rob_fill_slot_ex1;
     uint32_t rob_fill_slot_ex2;
     uint32_t rob_fill_slot_ex3;
@@ -129,123 +153,14 @@ struct PipeState_Next
     uint32_t rob_fill_slot_wb;
 
     // Instruction is valid - for ROB
+    bool if_isval;
+    bool id_isval;
     bool ex1_isval;
     bool ex2_isval;
     bool ex3_isval;
     bool ex4_isval;
     bool wb_isval;
 };
-
-struct PipeStateIFID
-{
-    uint32_t cycle;
-
-    //Push instructions
-    uint32_t ifInstrA;
-    uint32_t ifInstrB;
-
-    uint32_t idInstrA;
-    uint32_t idInstrB;
-
-    uint32_t exInstrA;
-    uint32_t exInstrB;
-
-    //Push PC
-    uint32_t ifPCA;
-    uint32_t idPCA;
-    uint32_t exPCA;
-
-    uint32_t ifPCB;
-    uint32_t idPCB;
-    uint32_t exPCB;
-
-    //Push Reg
-    std::vector<int32_t> ifregA;
-    std::vector<int32_t> idregA;
-    std::vector<int32_t> exregA;
-
-    std::vector<int32_t> ifregB;
-    std::vector<int32_t> idregB;
-    std::vector<int32_t> exregB;
-
-    //push execute
-    bool IFA;
-    bool IDA;
-    bool ex1A;
-
-    bool IFB;
-    bool IDB;
-    bool ex1B;
-
-    //push load
-    bool if_isloadA;
-    bool id_isloadA;
-    bool ex_isloadA;
-    
-    bool if_isstoreA;
-    bool id_isstoreA;
-    bool ex_isstoreA;
-
-    bool if_isloadB;
-    bool id_isloadB;
-    bool ex_isloadB;
-
-    bool if_isstoreB;
-    bool id_isstoreB;
-    bool ex_isstoreB;
-
-    //push mulDiv
-    bool if_isMulDivA;
-    bool id_isMulDivA;
-    bool ex_isMulDivA;
-
-    bool if_isMulDivB;
-    bool id_isMulDivB;
-    bool ex_isMulDivB;
-
-    // ROB Fill slots
-    uint32_t rob_fill_slot_ifA;
-    uint32_t rob_fill_slot_idA;
-    uint32_t rob_fill_slot_exA;
-
-    uint32_t rob_fill_slot_ifB;
-    uint32_t rob_fill_slot_idB;
-    uint32_t rob_fill_slot_exB;
-
-    // Instruction is valid - for ROB
-    bool if_isvalA;
-    bool id_isvalA;
-    bool ex_isvalA;
-
-    bool if_isvalB;
-    bool id_isvalB;
-    bool ex_isvalB;
-
-    bool is_jumpA_IF;
-    bool is_branchA_IF;
-    bool is_jumpA_ID;
-    bool is_branchA_ID; 
-    bool is_jumpA_EX;  
-    bool is_branchA_EX;
-
-    bool is_jumpB_IF;
-    bool is_branchB_IF;
-    bool is_jumpB_ID;
-    bool is_branchB_ID;
-    bool is_jumpB_EX;
-    bool is_branchB_EX;
-
-    //Hazard
-    int is_hazard_IF;
-    int is_hazard_ID;
-    int is_hazard_EX;
-
-    //Stall state, keeps a note of whether to stall or and for how many cycles for a hazard
-    int stall_state_IF;
-    int stall_state_ID;
-    int stall_state_EX;
-};
-
 
 struct ROBState {
 
@@ -258,22 +173,34 @@ struct ROBState {
     uint32_t tail;
     bool commited;
     uint32_t commit_instr;
+
 };
 
-void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState, PipeStateIFID & pipeStateIFID);
-void dumpROBState(ROBState & robState);
-void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool&is_RA, bool&is_IA, bool&is_JA, bool&is_RB, bool&is_IB, bool&is_JB, Decode& decodeA, Decode& decodeB, bool&is_md_non_stallA, bool&is_md_non_stallB, uint32_t instrA, uint32_t instrB);
-void moveOneCycle(State &mips_state, PipeStateIFID &pipeStateIFID, PipeState &pipeStateMULDIV, PipeState_Next &pipeState_NextMULDIV, PipeState &pipeStateALU, PipeState_Next &pipeState_NextALU, PipeState &pipeStateMEM, PipeState_Next &pipeState_NextMEM, bool executedA, bool executedB, int & CurCycle, uint32_t instrA, uint32_t instrB, int& stalling, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, uint32_t rob_tail, bool& hazard, uint32_t pc_A, uint32_t pc_B, std::vector<int32_t> regA, std::vector<int32_t> regB, bool&is_md_non_stallA, bool&is_md_non_stallB, bool &pause_for_jump_branch);
-void initPipeline(PipeState_Next &pipeState_Next);
-void initPipelineIFID(PipeStateIFID &pipeStateIFID);
-void initROB(ROBState &robState);
-void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling, PipeStateIFID &pipeStateIFID);
-void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t rob_tail, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB);
-void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next);
-void moveStalledMEM(PipeState &pipeState, PipeState_Next &pipeState_Next);
-void moveStalledMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next);
-void doROBWork(PipeStateIFID &pipeStateIFID, ROBState & robState, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV);
-void MoveOneCycleIFIDPause(PipeStateIFID &pipeStateIFID, State &mips_state);
+struct Instr {
 
+    uint32_t instr;
+    string stage[DIAGRAM_CYCLES];
+    bool done;
+    uint32_t commit_cycle;
+
+};
+
+struct DiagramState {
+
+    uint32_t cycles;
+    struct Instr instr[DIAGRAM_SIZE];
+    uint32_t num_instrs;
+    bool is_full;
+
+};
+
+void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState);
+void dumpROBState(ROBState & robState);
+void dumpPipeDiagram(DiagramState & dstate);
+void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, bool is_store, bool is_mulDiv, uint32_t rob_tail);
+void initPipeline(PipeState_Next &pipeState_Next);
+void initROB(ROBState &robState);
+void initDiagram(DiagramState &dstate);
+void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling);
 
 #endif /* DUMPHPP */
