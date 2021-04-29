@@ -42,7 +42,6 @@ int main(int argc, char* argv[]){
 		s = WEXITSTATUS(s);
 
 		//std::cout << "out " << s << std::endl;
-
 		
 		if(v[i].getOutput() == "0"){
 			if (s == v[i].getExitCode()){
@@ -51,9 +50,8 @@ int main(int argc, char* argv[]){
 			else{
 				std::cout << "FAILING HERE\n";
 				v[i].setResult("FAIL");
-			}
-
-			
+				std::cout << "FAILED FILE: " << v[i].getBin() << '\t';
+			}			
 		}
 		else{
 			std::string output = exec(command.c_str());
@@ -62,10 +60,8 @@ int main(int argc, char* argv[]){
 			}
 			else{
 				v[i].setResult("FAIL");
-			}
-			
+			}			
 		}
-
 		std::cout << v[i] << " Actual ExitCode: " << s << std::endl;
 	}
 

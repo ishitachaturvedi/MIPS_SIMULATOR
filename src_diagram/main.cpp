@@ -158,32 +158,33 @@ int main(int argc, char* argv[]){
 				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from MULDIV pipe: " << endl;
 			}
 
-
 			// Pipe Diagram Allocate
-			if (executed && (instr != NOP) && !dstate.is_full) {
+			
+			if (executed && (instr != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
 				dstate.instr[dstate.num_instrs].instr = instr;
 				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF";
 				dstate.instr[dstate.num_instrs].done = false;
+				
 				if (dstate.num_instrs < DIAGRAM_SIZE) {
 					dstate.num_instrs += 1;
 				} else {
 					dstate.is_full = true;
 				}
+				
 			}
 
+			
+			
 			if(stalling == 1)
 			{
 				stalling = 0;
 			}
-
 
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
 			//dumpROBState(robState);
 			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
-
-
 
 			CurCycle = CurCycle + 1;
 

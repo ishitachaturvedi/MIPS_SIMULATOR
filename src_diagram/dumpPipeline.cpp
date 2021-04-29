@@ -1054,9 +1054,9 @@ void dumpPipeDiagram(DiagramState & dstate)
         for (int i = 0; i < DIAGRAM_SIZE; i += 1) {
             diagram_out << i << "\t|";
             printInstr(dstate.instr[i].instr, diagram_out);
+            diagram_out  << "\t|" << dstate.instr[i].stage[0]; 
             for (int j = 0; j < DIAGRAM_CYCLES; j += 1) {
                 diagram_out  << "\t|" << dstate.instr[i].stage[j]; 
-
             }
             diagram_out  << "\t|" << endl;
         }
