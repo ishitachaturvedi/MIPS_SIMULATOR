@@ -158,6 +158,19 @@ int main(int argc, char* argv[]){
 				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from MULDIV pipe: " << endl;
 			}
 
+
+			// Pipe Diagram Allocate
+			if (executed && (instr != NOP) && !dstate.is_full) {
+				dstate.instr[dstate.num_instrs].instr = instr;
+				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF";
+				dstate.instr[dstate.num_instrs].done = false;
+				if (dstate.num_instrs < DIAGRAM_SIZE) {
+					dstate.num_instrs += 1;
+				} else {
+					dstate.is_full = true;
+				}
+			}
+
 			if(stalling == 1)
 			{
 				stalling = 0;
@@ -179,13 +192,13 @@ int main(int argc, char* argv[]){
 				mips_state.pc = tempNPC;
 			}
 
-			/*
+			
 			if(pipeStateALU.wbPC == ADDR_NULL){
 				std::cout << "Dumping Pipe Diagram" << endl;
 				dumpPipeDiagram(dstate);
 
 			}
-			*/
+			
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 
 			if(!pipeStateALU.wb){

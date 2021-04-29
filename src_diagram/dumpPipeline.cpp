@@ -571,6 +571,7 @@ void initDiagram(DiagramState &dstate)
 {
     dstate.cycles = 0;
     dstate.num_instrs = 0;
+    dstate.is_full = false;
     for (int i = 0; i < DIAGRAM_SIZE; i += 1) {
         dstate.instr[i].instr = NOP;
         dstate.instr[i].done = true;
@@ -1050,8 +1051,16 @@ void dumpPipeDiagram(DiagramState & dstate)
 
     if(diagram_out)
     {
+        for (int i = 0; i < DIAGRAM_SIZE; i += 1) {
+            diagram_out << i << "\t|";
+            printInstr(dstate.instr[i].instr, diagram_out);
+            for (int j = 0; j < DIAGRAM_CYCLES; j += 1) {
+                diagram_out  << "\t|" << dstate.instr[i].stage[j]; 
 
-        diagram_out << "####################################################" << endl;
+            }
+            diagram_out  << "\t|" << endl;
+        }
+        diagram_out << "---------------------------------------------------------------------------------------------------" << endl;
 
     }
     else
