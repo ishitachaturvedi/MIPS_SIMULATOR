@@ -159,6 +159,7 @@ int main(int argc, char* argv[]){
 			}
 
 			// Pipe Diagram Allocate
+			
 			if (executed && (instr != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
 				dstate.instr[dstate.num_instrs].instr = instr;
 				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF";
@@ -170,6 +171,8 @@ int main(int argc, char* argv[]){
 					dstate.is_full = true;
 				}
 			}
+			
+			
 
 			updatePipeDiagram(dstate, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 			
@@ -182,8 +185,7 @@ int main(int argc, char* argv[]){
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
 			//dumpROBState(robState);
-			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
-			// Update Pipe Diagram
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
 
 			CurCycle = CurCycle + 1;
 
@@ -192,12 +194,14 @@ int main(int argc, char* argv[]){
 				mips_state.pc = tempNPC;
 			}
 
-			
+			/*
 			if(pipeStateALU.wbPC == ADDR_NULL){
 				std::cout << "Dumping Pipe Diagram" << endl;
 				dumpPipeDiagram(dstate);
 
 			}
+			*/
+			
 			
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 

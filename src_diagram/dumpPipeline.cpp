@@ -647,7 +647,7 @@ void updatePipeDiagram(DiagramState &dstate, PipeState &pipeStateALU, PipeState 
 {
     if (stalling == 1) {
         dstate.cycle += 1;
-    } else if (stalling == 0) {
+    } else if ((stalling == 0) && (dstate.cycle < DIAGRAM_CYCLES-1) ) {
         uint32_t cycle = dstate.cycle;
         // update diagram from ALU instrs
         if (pipeStateALU.id_isval) {
