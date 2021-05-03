@@ -18,6 +18,7 @@ static void handleJInst(uint32_t instr, std::ostream & out_stream);
 #define ROB_SIZE 16
 
 #define NOP 0x00000000
+#define ADDR_NULL 0x00000000
 
 using namespace std;
 
@@ -116,24 +117,15 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
 
     // if ex1 are load inst which is being waited on, we stall
     if(
-        (pipeStateIFID.stall_state_ID !=1)
-        && (
-            ((idA.rs == ex1MEM.rt || idA.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr))
-            || ((idB.rs == ex1MEM.rt || idB.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr))
+        (pipeStateIFID.stall_state_ID !=1) &&
+        (
+            ((idA.rs == ex1MEM.rt || idA.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr) && !(instr_DA == pipeStateMEM.ex1Instr))
+            || ((idB.rs == ex1MEM.rt || idB.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr) && !(instr_DA == pipeStateMEM.ex1Instr))
         )
     )
     {
         stalling = 1;
     }
-
-
-    // DEBUG CODE - NIMRA
-    /*
-    std::cout << "Cycle: " << pipeStateALU.cycle << " ------- Stalling = " << stalling << endl;
-    std::cout  << "--------------------------------------------------------------------------" << endl;
-    std::cout  << "id.rs = " << id.rs <<  ", id.rd = " << id.rd << ", ex1MEM.rt = " << ex1MEM.rt << ", pipeStateMEM.ex1_isload = " << pipeStateMEM.ex1_isload << endl;
-    std::cout  << "--------------------------------------------------------------------------" << endl;
-    */
 
     // if ex1, ex2, ex3 are mulDiv inst which is being waited on, we stall
     if(
@@ -151,6 +143,7 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
 
 void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool&is_RA, bool&is_IA, bool&is_JA, bool&is_RB, bool&is_IB, bool&is_JB, Decode& decodeA, Decode& decodeB, bool&is_md_non_stallA, bool&is_md_non_stallB, uint32_t instrA, uint32_t instrB)
 {
+
     // CHECK FOR STR HAZARDS
     bool str_hazard = false;
     if((!is_jumpA && !is_branchA) && (instrA!=NOP && instrB!= NOP))
@@ -177,7 +170,7 @@ void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_m
                 ((decodeA.rd == decodeB.rs || decodeA.rd == decodeB.rt) && decodeA.rd!= 0x0)
                     mem_hazard = true;
             }
-            else if(is_IB)
+            else if(is_IB and !is_storeB)
             {
                 if
                 ((decodeA.rd == decodeB.rs) && decodeA.rd!= 0x0)
@@ -192,16 +185,29 @@ void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_m
                 ((decodeA.rt == decodeB.rs || decodeA.rt == decodeB.rt) && decodeA.rt!= 0x0)
                     mem_hazard = true;
             }
-            else if(is_IB)
+            else if(is_IB and !is_storeB)
             {
                 if
                 ((decodeA.rt == decodeB.rs) && decodeA.rt!= 0x0)
                     mem_hazard = true;
             }
+            else if(is_IB and is_storeB)
+            {
+                if
+                ((decodeA.rt == decodeB.rt) && decodeA.rt!= 0x0)
+                    mem_hazard = true;
+            }
         }
     }
 
-    hazard = mem_hazard || str_hazard;
+    //add branch delay slot
+    bool delay = false;
+    if(is_jumpA || is_branchA)
+    {
+        delay = true;
+    }
+
+    hazard = mem_hazard || str_hazard || delay;
 }
 
 void moveOneCycleMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next, uint32_t instr, bool executed, bool is_mulDiv, uint32_t rob_tail, uint32_t PC, std::vector<int32_t> reg, bool valid)
@@ -412,7 +418,7 @@ void MoveOneCycleIFIDPause(PipeStateIFID &pipeStateIFID, State &mips_state)
     pipeStateIFID.if_isvalB = 0;
 }
 
-void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t rob_tail, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB)
+void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t rob_tail, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB, int& stalling)
 {
 
     //pass stall stage
@@ -423,7 +429,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t in
     //pass instructions
     if ( pipeStateIFID.stall_state_EX == 0)
     {
-        //piper << "IN 0\n";
         pipeStateIFID.exInstrA = pipeStateIFID.idInstrA;
         pipeStateIFID.idInstrA = pipeStateIFID.ifInstrA;
         pipeStateIFID.ifInstrA = instrA;
@@ -454,8 +459,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t in
         pipeStateIFID.ifInstrB = instrB;
     }
 
-    //pass PC
-    if ( pipeStateIFID.stall_state_EX ==1 || pipeStateIFID.stall_state_EX ==0)
     {
         pipeStateIFID.exPCA = pipeStateIFID.idPCA;
         pipeStateIFID.idPCA = pipeStateIFID.ifPCA;
@@ -467,7 +470,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t in
     }
 
 
-    if ( pipeStateIFID.stall_state_EX ==2 || pipeStateIFID.stall_state_EX ==0)
     {
         //pass ROB tail
         pipeStateIFID.rob_fill_slot_exA = rob_tail;
@@ -491,7 +493,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t in
     pipeStateIFID.ifregB = regB;
 
     //pass hazard from IF to ID
-    if ( pipeStateIFID.stall_state_EX == 0)
     {
         pipeStateIFID.is_hazard_EX = pipeStateIFID.is_hazard_ID;
         pipeStateIFID.is_hazard_ID = pipeStateIFID.is_hazard_IF;
@@ -528,48 +529,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t in
         pipeStateIFID.id_isstoreB = pipeStateIFID.if_isstoreB;
     }
 
-    if ( pipeStateIFID.stall_state_EX == 2)
-    {
-
-        pipeStateIFID.is_jumpA_EX = pipeStateIFID.is_jumpA_ID;
-        pipeStateIFID.is_jumpA_ID = pipeStateIFID.is_jumpA_IF;
-
-        pipeStateIFID.is_branchA_EX = pipeStateIFID.is_branchA_ID;
-        pipeStateIFID.is_branchA_ID = pipeStateIFID.is_branchA_IF;
-
-        //Pass MULDIV, LOAD/STORE ETC
-        pipeStateIFID.ex_isMulDivA = pipeStateIFID.id_isMulDivA;
-        pipeStateIFID.id_isMulDivA = pipeStateIFID.if_isMulDivA;
-
-        pipeStateIFID.ex_isloadA = pipeStateIFID.id_isloadA;
-        pipeStateIFID.id_isloadA = pipeStateIFID.if_isloadA;
-
-        pipeStateIFID.ex_isstoreA = pipeStateIFID.id_isstoreA;
-        pipeStateIFID.id_isstoreA = pipeStateIFID.if_isstoreA;
-
-    }
-
-    if ( pipeStateIFID.stall_state_EX == 1)
-    {
-        pipeStateIFID.is_hazard_EX = pipeStateIFID.is_hazard_ID;
-        pipeStateIFID.is_hazard_ID = pipeStateIFID.is_hazard_IF;
-
-        pipeStateIFID.is_jumpB_EX = pipeStateIFID.is_jumpB_ID;
-        pipeStateIFID.is_jumpB_ID = pipeStateIFID.is_jumpB_IF;
-
-        pipeStateIFID.is_branchB_EX = pipeStateIFID.is_branchB_ID;
-        pipeStateIFID.is_branchB_ID = pipeStateIFID.is_branchB_IF;
-
-        pipeStateIFID.ex_isMulDivB = pipeStateIFID.id_isMulDivB;
-        pipeStateIFID.id_isMulDivB = pipeStateIFID.if_isMulDivB;
-
-        pipeStateIFID.ex_isloadB = pipeStateIFID.id_isloadB;
-        pipeStateIFID.id_isloadB = pipeStateIFID.if_isloadB;
-
-        pipeStateIFID.ex_isstoreB = pipeStateIFID.id_isstoreB;
-        pipeStateIFID.id_isstoreB = pipeStateIFID.if_isstoreB;
-    }
-
     {
         pipeStateIFID.ex1A = pipeStateIFID.IDA;
         pipeStateIFID.IDA = pipeStateIFID.IFA;
@@ -588,7 +547,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t in
     }
 
 
-    //pass valid state
     {
         pipeStateIFID.ex_isvalA = pipeStateIFID.id_isvalA;
         pipeStateIFID.id_isvalA = pipeStateIFID.if_isvalA;
@@ -598,7 +556,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t in
     }
 
     //change if only when not stalling front end
-    if ( pipeStateIFID.stall_state_EX == 1 || pipeStateIFID.stall_state_EX == 0)
     {
         pipeStateIFID.is_hazard_IF = hazard;
         pipeStateIFID.is_jumpA_IF = is_jumpA;
@@ -733,6 +690,8 @@ void moveOneCycle(State &mips_state, PipeStateIFID &pipeStateIFID, PipeState &pi
 
     int stall_state = 0;
 
+    //cout << "INSIDE "<<unsigned(instrA) <<" "<< unsigned(instrB) <<"\n";
+
     if(pipeStateIFID.stall_state_IF != 0)
     {
         stall_state = pipeStateIFID.stall_state_IF - 1;
@@ -752,33 +711,15 @@ void moveOneCycle(State &mips_state, PipeStateIFID &pipeStateIFID, PipeState &pi
     bool is_valA = (executedA && (instrA != NOP));
     bool is_valB = (executedB && (instrB != NOP) && !is_jumpA &&!is_branchA); 
 
-    MoveOneCycleIFID(pipeStateIFID, instrA, instrB, pc_A, pc_B, rob_tail, regA, regB, hazard, is_jumpA, is_branchA, is_jumpB, is_branchB, is_loadA, is_storeA, is_mulDivA, is_loadB, is_storeB, is_mulDivB, executedA, executedB, stall_state, is_valA, is_valB);
+    MoveOneCycleIFID(pipeStateIFID, instrA, instrB, pc_A, pc_B, rob_tail, regA, regB, hazard, is_jumpA, is_branchA, is_jumpB, is_branchB, is_loadA, is_storeA, is_mulDivA, is_loadB, is_storeB, is_mulDivB, executedA, executedB, stall_state, is_valA, is_valB, stalling);
 
     if(pause_for_jump_branch)
     {
         pause_for_jump_branch = false;
     }
 
-    if((pipeStateIFID.is_branchB_ID || pipeStateIFID.is_branchA_ID) && pipeStateIFID.stall_state_EX==1 && !pipeStateIFID.is_jumpA_ID)    
-    {
-        MoveOneCycleIFIDPause(pipeStateIFID, mips_state);
-    }
-
-    //if branch taken or a jump in ID stage, add a cycle for branch delay
-    if(pipeStateIFID.stall_state_EX==0 && (pipeStateIFID.stall_state_ID==0) && (pipeStateIFID.is_branchA_ID ||pipeStateIFID.is_branchB_ID) && !pipeStateIFID.is_jumpA_ID &&(pipeStateIFID.IDA))
-    {
-       pause_for_jump_branch = true;
-       MoveOneCycleIFIDPause(pipeStateIFID, mips_state);
-    }
-
-    if(pipeStateIFID.stall_state_EX==2 && (!pipeStateIFID.is_branchA_ID && pipeStateIFID.is_branchB_ID))
-    {
-       pause_for_jump_branch = true;
-       MoveOneCycleIFIDPause(pipeStateIFID, mips_state);
-    }
-
     bool isALU_B = !pipeStateIFID.ex_isMulDivB && !(pipeStateIFID.ex_isloadB || pipeStateIFID.ex_isstoreB);
-    bool isALU_A = !pipeStateIFID.ex_isMulDivA && !(pipeStateIFID.ex_isloadA || pipeStateIFID.ex_isstoreA) && !(pipeStateIFID.exInstrA==NOP && pipeStateIFID.exInstrB!=NOP && isALU_B);
+    bool isALU_A = !pipeStateIFID.ex_isMulDivA && !(pipeStateIFID.ex_isloadA || pipeStateIFID.ex_isstoreA) && !(pipeStateIFID.exInstrA==NOP && (pipeStateIFID.exInstrB!=NOP || pipeStateIFID.exPCB == ADDR_NULL) && isALU_B);
 
     //initialise with latest value of registers
     reg_MULDIV = pipeStateIFID.exregB;
@@ -1271,6 +1212,7 @@ static void handleImmInst(uint32_t instr, ostream & out_stream)
             sb << " " << opString << " " << regNames[rs] << ", " << regNames[rt] << ", " << hex << "0x" << static_cast<uint32_t>(imm) << " ";
             break;
         case OP_LBU:
+        case OP_LB:
         case OP_LHU:
         case OP_LW:
         case OP_LWL:

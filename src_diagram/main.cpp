@@ -113,10 +113,10 @@ int main(int argc, char* argv[]){
 					instrMULDIV = NOP;				
 				}
 			}
-			
-			moveOneCycle(mips_state, pipeStateALU, pipeState_NextALU, executed, CurCycle, instrALU, stalling, is_load, is_store, is_mulDiv, robState.tail);
-			moveOneCycle(mips_state, pipeStateMEM, pipeState_NextMEM, executed, CurCycle, instrMEM, stalling, is_load, is_store, is_mulDiv, robState.tail);
-			moveOneCycle(mips_state, pipeStateMULDIV, pipeState_NextMULDIV, executed, CurCycle, instrMULDIV, stalling, is_load, is_store, is_mulDiv, robState.tail);
+
+			moveOneCycle(mips_state, pipeStateALU, pipeState_NextALU, executed, CurCycle, instrALU, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
+			moveOneCycle(mips_state, pipeStateMEM, pipeState_NextMEM, executed, CurCycle, instrMEM, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
+			moveOneCycle(mips_state, pipeStateMULDIV, pipeState_NextMULDIV, executed, CurCycle, instrMULDIV, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
 
 			// ROB Commit
 			if ((!robState.pending[robState.head]) && (robState.valid[robState.head])) {
@@ -159,7 +159,6 @@ int main(int argc, char* argv[]){
 			}
 
 			// Pipe Diagram Allocate
-			
 			if (executed && (instr != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
 				dstate.instr[dstate.num_instrs].instr = instr;
 				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF";
@@ -170,10 +169,9 @@ int main(int argc, char* argv[]){
 				} else {
 					dstate.is_full = true;
 				}
-				
 			}
 
-			
+			updatePipeDiagram(dstate, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 			
 			if(stalling == 1)
 			{
@@ -184,7 +182,8 @@ int main(int argc, char* argv[]){
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
 			//dumpROBState(robState);
-			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
+			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
+			// Update Pipe Diagram
 
 			CurCycle = CurCycle + 1;
 

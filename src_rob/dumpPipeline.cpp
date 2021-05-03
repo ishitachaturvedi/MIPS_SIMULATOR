@@ -780,6 +780,7 @@ static void handleImmInst(uint32_t instr, ostream & out_stream)
             sb << " " << opString << " " << regNames[rs] << ", " << regNames[rt] << ", " << hex << "0x" << static_cast<uint32_t>(imm) << " ";
             break;
         case OP_LBU:
+        case OP_LB:
         case OP_LHU:
         case OP_LW:
         case OP_LWL:

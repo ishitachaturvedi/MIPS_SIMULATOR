@@ -8,23 +8,6 @@ void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load, bo
 	is_store = false;
 	is_branch = false;
 	if(!executed){
-		// uint32_t instr = mips_state.ram[mips_state.pc];
-
-		// uint32_t opcode = (instr & 0xFC000000) >> 26;
-		// uint32_t rs = (instr & 0x03E00000) >> 21;
-		// uint32_t rt= (instr & 0x001F0000) >> 16;
-		// int32_t immediate = instr & 0x0000FFFF;
-
-		//In our case BranchAddr = SignExtImm;
-
-		// int32_t SignExtImm;
-
-		// if(immediate >> 15){
-		// 	SignExtImm = immediate | 0xFFFF0000;
-		// }
-		// else{
-		// 	SignExtImm = immediate;
-		// }
 
 		is_I = true;
 
@@ -169,7 +152,7 @@ void andi(State& mips_state, uint32_t rs, uint32_t rt, int32_t immediate){
 void beq(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool& is_branch, bool is_start){
 	if(mips_state.reg[rt] == mips_state.reg[rs]){
 		//if (is_start)
-			mips_state.npc = mips_state.npc + 1;
+			//mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
 		is_branch = true;
 	}
@@ -182,7 +165,7 @@ void bne(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool& 
 	if(mips_state.reg[rt] != mips_state.reg[rs]){
 		//if (is_start)
 		//cout <<" branch taken\n";
-			mips_state.npc = mips_state.npc + 1;
+			//mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
 		is_branch = true;
 	}
@@ -552,8 +535,6 @@ void sw(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm){
 
 void bgez(State& mips_state, uint32_t rs, int32_t SignExtImm, bool& is_branch, bool is_start){
 	if(mips_state.reg[rs] >= 0){
-		//if (is_start)
-			mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
 		is_branch = true;
 	}
@@ -567,8 +548,6 @@ void bgezal(State& mips_state, uint32_t rs, int32_t SignExtImm, bool& is_branch,
 	//Regardless of whether the condition is true, the return address needs to be set
 	mips_state.reg[31] = (mips_state.pc * 4) + 8;
 	if(temp >= 0){
-		//if (is_start)
-			mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
 		is_branch = true;
 	}
@@ -583,8 +562,6 @@ void bgtz(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool&
 		}
 		else{
 			if(mips_state.reg[rs] > 0){
-				//if (is_start)
-					mips_state.npc = mips_state.npc + 1;
 				mips_state.npc += SignExtImm;
 				is_branch = true;
 			}
@@ -602,8 +579,6 @@ void blez(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool&
 
 		else{
 			if(temp <= 0x00000000){
-				//if (is_start)
-					mips_state.npc = mips_state.npc + 1;
 				mips_state.npc += SignExtImm;
 				is_branch = true;
 			}
@@ -616,8 +591,6 @@ void blez(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm, bool&
 void bltz(State& mips_state, uint32_t rs, int32_t SignExtImm, bool& is_branch, bool is_start){
 	int32_t temp = mips_state.reg[rs];
 	if(temp < 0){
-		//if (is_start)
-			mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
 		is_branch = true;
 	}
@@ -631,8 +604,6 @@ void bltzal(State& mips_state, uint32_t rs, int32_t SignExtImm, bool& is_branch,
 	//Regardless of whether the conditions is true, the return address hars to be set
 	mips_state.reg[31] = (mips_state.pc * 4) + 8;
 	if(temp < 0){
-		//if (is_start)
-			mips_state.npc = mips_state.npc + 1;
 		mips_state.npc += SignExtImm;
 		is_branch = true;
 	}

@@ -39,11 +39,7 @@ int main(int argc, char* argv[]){
 
 		string fileName(argv[1]);
 		int32_t tempNPC = 0;
-		int32_t tempNPC_bufferA = 0;
-		int32_t tempNPC_bufferB = 0;
 
-		int32_t bufferPC;
-		
 		bool executedA;				//this flag is turned on when an instruction of one of the 3 types has been executed
 		bool executedB;
 
@@ -100,10 +96,16 @@ int main(int argc, char* argv[]){
 		bool is_exited = false;
 
 		bool is_start = true;
-		bool use_next = false;
+
+		bool is_branch_jump_B_prev = false;
 
 		std::vector<int32_t> regA;
     	std::vector<int32_t> regB;
+
+		uint32_t instrA = NOP;
+		uint32_t instrB = NOP;
+		uint32_t pc_A = 0x1;
+		uint32_t pc_B = 0x1;
 
 		setUp(mips_state, fileName);		//Passes the instructions to the vector
 
@@ -121,31 +123,19 @@ int main(int argc, char* argv[]){
 			executedA = false;		//every new clock cycle the flag is turned off since no instruction has yet been executed
 			executedB = false;		//every new clock cycle the flag is turned off since no instruction has yet been executed
 
-
-			uint32_t instrA = mips_state.ram[mips_state.pc];
-			uint32_t pc_A = mips_state.pc;
-			uint32_t pc_B = mips_state.pc + 1;
-			uint32_t instrB = mips_state.ram[pc_B];
-			mips_state.npc = mips_state.pc;
-
 			robState.cycle = CurCycle;
 			robState.commited = false;
 			robState.commit_instr = NOP;
-
-			//Send Instruction for Decode
-			decode_inst(instrA,decodeA);
-			decode_inst(instrB,decodeB);
 
 			// Execute if not stalling
 			if(stalling != 1 && pipeStateIFID.stall_state_IF != 1 && !is_exited && !pause_for_jump_branch)
 			{
 				flush(cout);
-				tempNPC = tempNPC_bufferA + 1;
+				instrA = mips_state.ram[mips_state.pc];
+				pc_A = mips_state.pc;
+				decode_inst(instrA,decodeA);
 				tempNPC = mips_state.npc;
 				
-				if(is_start)
-					tempNPC = mips_state.npc + 1;
-
 				//Execute Instructions
 				r_type(mips_state,executedA,decodeA,is_mulDivA,is_jumpA,is_branchA,is_RA,is_md_non_stallA);
 				i_type(mips_state,executedA,decodeA,is_loadA,is_storeA,is_branchA,is_IA,is_start);
@@ -153,25 +143,43 @@ int main(int argc, char* argv[]){
 
 				regA = mips_state.reg;
 
-				tempNPC_bufferA = mips_state.npc;
+				mips_state.pc = tempNPC;
 
-				// execute second instruction only if first was not a jump or a taken branch
-				if(!is_branchA && !is_jumpA)
+				if(!is_branch_jump_B_prev && pc_A!=ADDR_NULL)
 				{	
+					tempNPC = mips_state.npc;
+					instrB = mips_state.ram[mips_state.pc];
+					pc_B = mips_state.pc;
+					decode_inst(instrB,decodeB);
 					r_type(mips_state,executedB,decodeB,is_mulDivB,is_jumpB,is_branchB,is_RB,is_md_non_stallB);
 					i_type(mips_state,executedB,decodeB,is_loadB,is_storeB,is_branchB,is_IB,is_start);
 					j_type(mips_state,executedB,decodeB,is_jumpB,is_JB);
+					mips_state.pc = tempNPC;
 				}
+				else
+				{
+					instrB = NULL;
+					is_mulDivB = false;
+					is_jumpB = false;
+					is_branchB = false;
+					is_RB = false;
+					is_md_non_stallB = false;
+					is_loadB = false;
+					is_storeB = false;
+					is_IB = false;
+					is_JB = false;
+				}
+
+				if(is_branch_jump_B_prev)
+					is_branch_jump_B_prev = false;
+
+				if(is_jumpB)
+					is_branch_jump_B_prev = true;
 
 				is_start = false;
 
-				tempNPC_bufferB = mips_state.npc;
-
 				regB = mips_state.reg;
 			}
-
-			if(tempNPC == ADDR_NULL)
-				is_exited = true;
 
 			checkHazardAndBranch(hazard, is_loadA, is_storeA, is_mulDivA, is_loadB, is_storeB, is_mulDivB, is_jumpA, is_branchA, is_jumpB, is_branchB, is_RA, is_IA, is_JA, is_RB, is_IB, is_JB, decodeA, decodeB, is_md_non_stallA, is_md_non_stallB, instrA, instrB);
 
@@ -229,15 +237,12 @@ int main(int argc, char* argv[]){
 			// ROB Fill
 			if (pipeStateALU.wb_isval) {
 				robState.pending[pipeStateALU.rob_fill_slot_wb] = false;
-				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from ALU pipe: " << endl;
 			}
 			if (pipeStateMEM.wb_isval) {
 				robState.pending[pipeStateMEM.rob_fill_slot_wb] = false;
-				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from MEM pipe:"  << endl;
 			}
 			if (pipeStateMULDIV.wb_isval) {
 				robState.pending[pipeStateMULDIV.rob_fill_slot_wb] = false;
-				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from MULDIV pipe: " << endl;
 			}
 
 			if(stalling == 1)
@@ -248,29 +253,8 @@ int main(int argc, char* argv[]){
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling, pipeStateIFID);
 
-			//dumpROBState(robState);
-			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID);	
-
 			CurCycle = CurCycle + 1;
 
-			// move forward two cycles 
-			if(stalling !=1  && pipeStateIFID.stall_state_ID!=2 && !pause_for_jump_branch)
-			{
-				if(use_next)
-				{
-					mips_state.pc = bufferPC;
-					use_next = false;
-				}
-				else
-					mips_state.pc = mips_state.npc;
-			}
-
-			if(pipeStateIFID.stall_state_IF == 1)
-			{
-				bufferPC = mips_state.npc;
-				use_next = true;
-			}
-			 
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 
 			if(!pipeStateALU.wb){
