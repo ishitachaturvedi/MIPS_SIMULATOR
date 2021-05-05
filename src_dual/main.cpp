@@ -248,6 +248,7 @@ int main(int argc, char* argv[]){
 				robState.pending[pipeStateMULDIV.rob_fill_slot_wb] = false;
 			}
 
+			/*
 			// Pipe Diagram Allocate
 			if (pipeStateIFID.IFA && (pipeStateIFID.ifInstrA != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
 				dstate.instr[dstate.num_instrs].instr = pipeStateIFID.ifInstrA;
@@ -271,6 +272,7 @@ int main(int argc, char* argv[]){
 					dstate.is_full = true;
 				}
 			}
+			*/
 
 			if(stalling == 1)
 			{
@@ -282,6 +284,7 @@ int main(int argc, char* argv[]){
 
 			CurCycle = CurCycle + 1;
 
+			/*
 			if(pipeStateALU.wbPC == ADDR_NULL){
 				std::cout << "Cycle Count: " << CurCycle << endl;
 			}
@@ -291,7 +294,7 @@ int main(int argc, char* argv[]){
 				std::cout << "Dumping Pipe Diagram" << endl;
 				dumpPipeDiagram(dstate);
 			}
-			
+			*/
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 
 			if(!pipeStateALU.wb){
