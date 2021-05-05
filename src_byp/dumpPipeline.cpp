@@ -89,7 +89,7 @@ void checkForStall(PipeState &pipeState, bool is_load, int &stalling)
 }
 
 //move pipeline one cycle forward
-void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, int stalling, bool is_load)
+void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, uint32_t diagram_slot)
 {
     if(stalling != 2)
     {    
@@ -144,6 +144,31 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
 
         pipeState_Next.ex_isload = pipeState_Next.id_isload;
         pipeState_Next.id_isload = pipeState.if_isload;
+
+        // iNSTRUCTION Valid
+        pipeState.if_isval = (instr != NOP);
+        pipeState.id_isval = pipeState_Next.id_isval;
+        pipeState.ex_isval = pipeState_Next.ex_isval;
+        pipeState.mem_isval = pipeState_Next.mem_isval;
+        pipeState.wb_isval = pipeState_Next.wb_isval;
+
+        pipeState_Next.wb_isval = pipeState_Next.mem_isval;
+        pipeState_Next.mem_isval = pipeState_Next.ex_isval;
+        pipeState_Next.ex_isval = pipeState_Next.id_isval;
+        pipeState_Next.id_isval = pipeState.if_isval;
+
+
+        // Pipe Diagram fill slots
+        pipeState.diagram_slot_if = diagram_slot;
+        pipeState.diagram_slot_id = pipeState_Next.diagram_slot_id;
+        pipeState.diagram_slot_ex = pipeState_Next.diagram_slot_ex;
+        pipeState.diagram_slot_mem = pipeState_Next.diagram_slot_mem;
+        pipeState.diagram_slot_wb = pipeState_Next.diagram_slot_wb;
+
+        pipeState_Next.diagram_slot_wb = pipeState_Next.diagram_slot_mem;
+        pipeState_Next.diagram_slot_mem = pipeState_Next.diagram_slot_ex;
+        pipeState_Next.diagram_slot_ex = pipeState_Next.diagram_slot_id;
+        pipeState_Next.diagram_slot_id = pipeState.diagram_slot_if;
     }
 
     if(stalling == 2)
@@ -152,6 +177,19 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
         pipeState.wbInstr = pipeState.memInstr;
         pipeState.memInstr = pipeState.exInstr;
         pipeState_Next.wbInstr =  pipeState.memInstr;
+
+        // iNSTRUCTION Valid
+        pipeState.mem_isval = pipeState_Next.mem_isval;
+        pipeState.wb_isval = pipeState_Next.wb_isval;
+
+        pipeState_Next.wb_isval = pipeState_Next.mem_isval;
+        pipeState_Next.mem_isval = pipeState_Next.ex_isval;
+
+        // Pipe Diagram fill slots
+        pipeState.diagram_slot_mem = pipeState_Next.diagram_slot_mem;
+        pipeState.diagram_slot_wb = pipeState_Next.diagram_slot_wb;
+
+        pipeState_Next.diagram_slot_wb = pipeState_Next.diagram_slot_mem;
     }
 }
 
@@ -167,6 +205,52 @@ void initPipeline(PipeState_Next &pipeState_Next)
     pipeState_Next.wbPC = 0x1;
     pipeState_Next.wb = 1;
 }
+
+void initDiagram(DiagramState &dstate)
+{
+    dstate.cycle = 0;
+    dstate.num_instrs = 0;
+    dstate.is_full = false;
+    for (int i = 0; i < DIAGRAM_SIZE; i += 1) {
+        dstate.instr[i].instr = NOP;
+        dstate.instr[i].done = true;
+        dstate.instr[i].commit_cycle = 0;
+        for (int j = 0; j < DIAGRAM_CYCLES; j += 1) {
+            dstate.instr[i].stage[j] = "---";
+        }
+    }
+}
+
+void updatePipeDiagram(DiagramState &dstate, PipeState &pipeState, int &stalling)
+{
+    uint32_t cycle = dstate.cycle;
+    if (stalling == 1 && (dstate.cycle < DIAGRAM_CYCLES-1)) {
+        if (pipeState.ex_isval) {
+            dstate.instr[pipeState.diagram_slot_ex].stage[cycle] = "X  ";
+        }
+        if (pipeState.mem_isval) {
+            dstate.instr[pipeState.diagram_slot_mem].stage[cycle] = "MEM";
+        }
+        if (pipeState.wb_isval) {
+            dstate.instr[pipeState.diagram_slot_wb].stage[cycle] = "WB ";
+        }
+    } else if ((stalling == 0) && (dstate.cycle < DIAGRAM_CYCLES-1) ) {
+        if (pipeState.id_isval) {
+            dstate.instr[pipeState.diagram_slot_id].stage[cycle] = "ID ";
+        }
+        if (pipeState.ex_isval) {
+            dstate.instr[pipeState.diagram_slot_ex].stage[cycle] = "X  ";
+        }
+        if (pipeState.mem_isval) {
+            dstate.instr[pipeState.diagram_slot_mem].stage[cycle] = "MEM";
+        }
+        if (pipeState.wb_isval) {
+            dstate.instr[pipeState.diagram_slot_wb].stage[cycle] = "WB ";
+        }
+    }
+    dstate.cycle += 1;
+}
+
 
 //Byte's the smallest thing that can hold the opcode...
 static uint8_t getOpcode(uint32_t instr)
@@ -539,5 +623,36 @@ void dumpPipeState(PipeState & state)
     else
     {
         cerr << "Could not open pipe state file!" << endl;
+    }
+}
+
+void dumpPipeDiagram(DiagramState & dstate)
+{
+
+    ofstream diagram_out("pipe_diagram.out", ios::app);
+
+    if(diagram_out)
+    {
+        diagram_out  << "\t|" << left << setw(25) << "Instruction " << "|"; 
+        for (int j = 0; j < DIAGRAM_CYCLES; j += 1) {
+            diagram_out  << j << "  |"; 
+        }
+        diagram_out << "|" << endl;
+        diagram_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
+
+        for (int i = 0; i < DIAGRAM_SIZE; i += 1) {
+            diagram_out << i << "\t|";
+            printInstr(dstate.instr[i].instr, diagram_out);
+            for (int j = 0; j < DIAGRAM_CYCLES; j += 1) {
+                diagram_out  << "|" << dstate.instr[i].stage[j]; 
+            }
+            diagram_out  << "\t|" << endl;
+        }
+        diagram_out << "---------------------------------------------------------------------------------------------------" << endl;
+
+    }
+    else
+    {
+        cerr << "Could not open pipe diagram file!" << endl;
     }
 }

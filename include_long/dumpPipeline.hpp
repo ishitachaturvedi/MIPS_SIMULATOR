@@ -143,7 +143,7 @@ struct PipeState_Next
     bool ex2_isMulDiv;
     bool ex3_isMulDiv;
 
-    // Instruction is valid - for ROB
+    // Instruction is valid
     bool if_isval;
     bool id_isval;
     bool ex1_isval;

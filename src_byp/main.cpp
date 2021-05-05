@@ -30,6 +30,9 @@ int main(int argc, char* argv[]){
 		PipeState_Next pipeState_Next;
 		Decode decode;
 
+		DiagramState dstate;
+		initDiagram(dstate);
+
 		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage
 
 
@@ -52,6 +55,8 @@ int main(int argc, char* argv[]){
 			//Send Instruction for Decode
 			decode_inst(instr,decode);
 
+			uint32_t instr_executed = NOP;
+
 			if(stalling !=2)
 			{
 				tempNPC = mips_state.npc;
@@ -64,6 +69,7 @@ int main(int argc, char* argv[]){
 				r_type(mips_state,executed,decode);
 				i_type(mips_state,executed,decode,is_load);
 				j_type(mips_state,executed,decode);
+				instr_executed = instr;
 			}
 
 			if(stalling == 3)
@@ -71,7 +77,24 @@ int main(int argc, char* argv[]){
 				stalling = 0;
 			}
 
-			moveOneCycle(mips_state, pipeState, pipeState_Next, executed, CurCycle, stalling, is_load);
+			moveOneCycle(mips_state, pipeState, pipeState_Next, executed, CurCycle, instr_executed, stalling, is_load, dstate.num_instrs);
+
+			// Pipe Diagram Allocate
+			
+			if (executed && (instr != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
+				dstate.instr[dstate.num_instrs].instr = instr;
+				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF ";
+				dstate.instr[dstate.num_instrs].done = false;
+				
+				if (dstate.num_instrs < DIAGRAM_SIZE) {
+					dstate.num_instrs += 1;
+				} else {
+					dstate.is_full = true;
+				}
+			}
+
+			updatePipeDiagram(dstate, pipeState, stalling);
+
 
 			ex_isload = pipeState.ex_isload;
 			
@@ -95,6 +118,13 @@ int main(int argc, char* argv[]){
 			if(pipeState.wbPC == ADDR_NULL){
 				std::cout << "Cycle Count: " << CurCycle << endl;
 			}
+
+						
+			if(pipeState.wbPC == ADDR_NULL){
+				std::cout << "Dumping Pipe Diagram" << endl;
+				dumpPipeDiagram(dstate);
+			}
+			
 
 			checkExit(pipeState.wbreg, pipeState.wbPC,CurCycle);
 
