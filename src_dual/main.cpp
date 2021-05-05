@@ -186,7 +186,7 @@ int main(int argc, char* argv[]){
 
 			checkHazardAndBranch(hazard, is_loadA, is_storeA, is_mulDivA, is_loadB, is_storeB, is_mulDivB, is_jumpA, is_branchA, is_jumpB, is_branchB, is_RA, is_IA, is_JA, is_RB, is_IB, is_JB, decodeA, decodeB, is_md_non_stallA, is_md_non_stallB, instrA, instrB);
 
-			moveOneCycle(mips_state, pipeStateIFID, pipeStateMULDIV, pipeState_NextMULDIV, pipeStateALU, pipeState_NextALU, pipeStateMEM, pipeState_NextMEM, executedA, executedB, CurCycle, instrA, instrB, stalling, is_loadA, is_storeA, is_mulDivA, is_loadB, is_storeB, is_mulDivB, is_jumpA, is_branchA, is_jumpB, is_branchB, robState.tail, hazard, pc_A, pc_B, regA, regB, is_md_non_stallA, is_md_non_stallB, pause_for_jump_branch);
+			moveOneCycle(mips_state, pipeStateIFID, pipeStateMULDIV, pipeState_NextMULDIV, pipeStateALU, pipeState_NextALU, pipeStateMEM, pipeState_NextMEM, dstate, executedA, executedB, CurCycle, instrA, instrB, stalling, is_loadA, is_storeA, is_mulDivA, is_loadB, is_storeB, is_mulDivB, is_jumpA, is_branchA, is_jumpB, is_branchB, robState.tail, dstate.num_instrs, hazard, pc_A, pc_B, regA, regB, is_md_non_stallA, is_md_non_stallB, pause_for_jump_branch);
 
 			// ROB Commit
 			if ((!robState.pending[robState.head]) && (robState.valid[robState.head])) {
@@ -248,31 +248,34 @@ int main(int argc, char* argv[]){
 				robState.pending[pipeStateMULDIV.rob_fill_slot_wb] = false;
 			}
 
-			/*
+			
 			// Pipe Diagram Allocate
-			if (pipeStateIFID.IFA && (pipeStateIFID.ifInstrA != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
+			
+			if (pipeStateIFID.IFA && (pipeStateIFID.ifInstrA != NOP) && !dstate.is_full && (CurCycle < (DIAGRAM_CYCLES-1))) {
 				dstate.instr[dstate.num_instrs].instr = pipeStateIFID.ifInstrA;
 				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF\t";
 				dstate.instr[dstate.num_instrs].done = false;
 				
-				if (dstate.num_instrs < DIAGRAM_SIZE) {
+				if (dstate.num_instrs < (DIAGRAM_SIZE-1)) {
 					dstate.num_instrs += 1;
 				} else {
 					dstate.is_full = true;
 				}
 			}
-			if (pipeStateIFID.IFB && (pipeStateIFID.ifInstrB != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
+			if (pipeStateIFID.IFB && (pipeStateIFID.ifInstrB != NOP) && !dstate.is_full && (CurCycle < (DIAGRAM_CYCLES-1))) {
 				dstate.instr[dstate.num_instrs].instr = pipeStateIFID.ifInstrB;
 				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF\t";
 				dstate.instr[dstate.num_instrs].done = false;
 				
-				if (dstate.num_instrs < DIAGRAM_SIZE) {
+				if (dstate.num_instrs < (DIAGRAM_SIZE-1)) {
 					dstate.num_instrs += 1;
 				} else {
 					dstate.is_full = true;
 				}
 			}
-			*/
+			
+			updatePipeDiagram(dstate, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling, pipeStateIFID);
+			
 
 			if(stalling == 1)
 			{
@@ -288,13 +291,13 @@ int main(int argc, char* argv[]){
 			if(pipeStateALU.wbPC == ADDR_NULL){
 				std::cout << "Cycle Count: " << CurCycle << endl;
 			}
-
+			*/
 			
 			if(pipeStateALU.wbPC == ADDR_NULL){
 				std::cout << "Dumping Pipe Diagram" << endl;
 				dumpPipeDiagram(dstate);
 			}
-			*/
+			
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 
 			if(!pipeStateALU.wb){
