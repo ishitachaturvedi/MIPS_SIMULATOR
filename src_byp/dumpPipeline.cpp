@@ -83,7 +83,7 @@ void checkForStall(PipeState &pipeState, bool is_load, int &stalling)
     decode_inst(pipeState.exInstr, ex);
 
     if(
-        ((id.rs == ex.rt || id.rd == ex.rt) && ex.rt != 0x0 && pipeState.ex_isload && (pipeState.exInstr != pipeState.wbInstr))
+        ((id.rs == ex.rt || id.rd == ex.rt) && ex.rt != 0x0 && pipeState.ex_isload && (pipeState.exInstr != pipeState.memInstr))
     )
     {
         stalling = 1;
