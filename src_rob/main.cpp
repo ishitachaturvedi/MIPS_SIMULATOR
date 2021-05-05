@@ -159,7 +159,6 @@ int main(int argc, char* argv[]){
 			}
 
 			// Pipe Diagram Allocate
-			
 			if (executed && (instr != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
 				dstate.instr[dstate.num_instrs].instr = instr;
 				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF\t";

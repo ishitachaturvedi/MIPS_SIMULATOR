@@ -999,22 +999,6 @@ void initROB(ROBState &robState)
 
 }
 
-
-void initDiagram(DiagramState &dstate)
-{
-    dstate.cycle = 0;
-    dstate.num_instrs = 0;
-    dstate.is_full = false;
-    for (int i = 0; i < DIAGRAM_SIZE; i += 1) {
-        dstate.instr[i].instr = NOP;
-        dstate.instr[i].done = true;
-        dstate.instr[i].commit_cycle = 0;
-        for (int j = 0; j < DIAGRAM_CYCLES; j += 1) {
-            dstate.instr[i].stage[j] = "------";
-        }
-    }
-}
-
 //Byte's the smallest thing that can hold the opcode...
 static uint8_t getOpcode(uint32_t instr)
 {
@@ -1468,36 +1452,5 @@ void dumpROBState(ROBState & robState)
     else
     {
         cerr << "Could not open pipe state file!" << endl;
-    }
-}
-
-void dumpPipeDiagram(DiagramState & dstate)
-{
-
-    ofstream diagram_out("pipe_diagram.out", ios::app);
-
-    if(diagram_out)
-    {
-        diagram_out  << "\t|" << left << setw(27) << "Instruction " << "|"; 
-        for (int j = 0; j < DIAGRAM_CYCLES; j += 1) {
-            diagram_out  << j << "\t    |"; 
-        }
-        diagram_out << "|" << endl;
-        diagram_out << "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
-
-        for (int i = 0; i < DIAGRAM_SIZE; i += 1) {
-            diagram_out << i << "\t|";
-            printInstr(dstate.instr[i].instr, diagram_out);
-            for (int j = 0; j < DIAGRAM_CYCLES; j += 1) {
-                diagram_out  << "\t|" << dstate.instr[i].stage[j]; 
-            }
-            diagram_out  << "\t|" << endl;
-        }
-        diagram_out << "---------------------------------------------------------------------------------------------------" << endl;
-
-    }
-    else
-    {
-        cerr << "Could not open pipe diagram file!" << endl;
     }
 }
