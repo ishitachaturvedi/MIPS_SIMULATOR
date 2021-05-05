@@ -38,6 +38,11 @@ MIPS_LDFLAGS += -Wl,--build-id=none
 #
 # make testbench/test.mips.bin
 
+##################################################
+
+## Make all binaries 
+all: simulator simulator_byp simulator_long simulator_3pipe simulator_rob simulator_dual testbench
+
 ###################################################
 ## BASE Simulator
 
@@ -166,3 +171,9 @@ testbench : bin/testbench
 
 %.dump: %.mips.elf
 	mips-linux-gnu-objdump -d $<
+
+####################################################
+
+clean:
+	rm -f bin/mips_simulator_byp bin/mips_simulator_long bin/mips_simulator_3pipe bin/mips_simulator_rob bin/mips_simulator_dual bin/testbench
+
