@@ -286,7 +286,7 @@ void initPipeline(PipeState_Next &pipeState_Next);
 void initPipelineIFID(PipeStateIFID &pipeStateIFID);
 void initROB(ROBState &robState);
 void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling, PipeStateIFID &pipeStateIFID);
-void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t rob_tail, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB);
+void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t rob_tail, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB, int& stalling);
 void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next);
 void moveStalledMEM(PipeState &pipeState, PipeState_Next &pipeState_Next);
 void moveStalledMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next);
