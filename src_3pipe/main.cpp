@@ -138,6 +138,10 @@ int main(int argc, char* argv[]){
 				mips_state.pc = tempNPC;
 			}
 
+			if(pipeStateALU.wbPC == ADDR_NULL){
+				std::cout << "Cycle Count: " << CurCycle << endl;
+			}
+			
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 
 			if(!pipeStateALU.wb){

@@ -1,15 +1,31 @@
 #include "error.hpp"
 #include <cstdlib> //for std::exit
+#include <iostream>
+
+using namespace std;
 
 void checkExec(const std::vector<int32_t>& reg, uint32_t addr){
 	if(((addr < ADDR_INSTR) || (addr > (ADDR_INSTR + ADDR_INSTR_L - 1))) && (addr != ADDR_NULL)){
 		throw (static_cast<int>(Exception::MEMORY));
 	}
+	// if(addr == ADDR_NULL){
+	// 	uint32_t out = reg[2] & 0x000000FF;
+	// 	std::cout<<"EXITING\n";
+	// 	std::exit(out);
+	// }
+}	
+
+void checkExit(const std::vector<int32_t>& reg, uint32_t addr, int CurCycle)
+{
 	if(addr == ADDR_NULL){
 		uint32_t out = reg[2] & 0x000000FF;
+		cout << CurCycle << " \n";
 		std::exit(out);
 	}
-}	
+	// if(((addr < ADDR_INSTR) || (addr > (ADDR_INSTR + ADDR_INSTR_L - 1))) && (addr != ADDR_NULL)){
+	// 	throw (static_cast<int>(Exception::MEMORY));
+	// }
+}
 
 void checkRead(uint32_t addr){
 	if(((addr < ADDR_INSTR) || (addr > (ADDR_INSTR + ADDR_INSTR_L - 1)))

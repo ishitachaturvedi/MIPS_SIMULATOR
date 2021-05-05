@@ -5,7 +5,7 @@
 #include "error.hpp"
 #include "Decode.hpp"
 
-void i_type(State& mips_state, bool& executed);
+void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load);
 
 void addi(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm);
 void addiu(State& mips_state, uint32_t rs, uint32_t rt, int32_t SignExtImm);

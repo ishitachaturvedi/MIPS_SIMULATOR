@@ -38,6 +38,9 @@ int main(int argc, char* argv[]){
 		ROBState robState;
 		initROB(robState);
 
+		DiagramState dstate;
+		initDiagram(dstate);
+
 		PipeState pipeStateALU;
 		pipeStateALU.pipe_type = ALU_PIPE;	
 		PipeState pipeStateMEM;	
@@ -110,10 +113,10 @@ int main(int argc, char* argv[]){
 					instrMULDIV = NOP;				
 				}
 			}
-			
-			moveOneCycle(mips_state, pipeStateALU, pipeState_NextALU, executed, CurCycle, instrALU, stalling, is_load, is_store, is_mulDiv, robState.tail);
-			moveOneCycle(mips_state, pipeStateMEM, pipeState_NextMEM, executed, CurCycle, instrMEM, stalling, is_load, is_store, is_mulDiv, robState.tail);
-			moveOneCycle(mips_state, pipeStateMULDIV, pipeState_NextMULDIV, executed, CurCycle, instrMULDIV, stalling, is_load, is_store, is_mulDiv, robState.tail);
+
+			moveOneCycle(mips_state, pipeStateALU, pipeState_NextALU, executed, CurCycle, instrALU, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
+			moveOneCycle(mips_state, pipeStateMEM, pipeState_NextMEM, executed, CurCycle, instrMEM, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
+			moveOneCycle(mips_state, pipeStateMULDIV, pipeState_NextMULDIV, executed, CurCycle, instrMULDIV, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
 
 			// ROB Commit
 			if ((!robState.pending[robState.head]) && (robState.valid[robState.head])) {
@@ -137,7 +140,8 @@ int main(int argc, char* argv[]){
 					robState.tail += 1;
 				} else {
 					robState.tail = 0;
-				}				
+				}
+				
 			}
 
 			// ROB Fill
@@ -154,6 +158,22 @@ int main(int argc, char* argv[]){
 				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from MULDIV pipe: " << endl;
 			}
 
+			// Pipe Diagram Allocate
+			
+			if (executed && (instr != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
+				dstate.instr[dstate.num_instrs].instr = instr;
+				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF\t";
+				dstate.instr[dstate.num_instrs].done = false;
+				
+				if (dstate.num_instrs < DIAGRAM_SIZE) {
+					dstate.num_instrs += 1;
+				} else {
+					dstate.is_full = true;
+				}
+			}
+
+			updatePipeDiagram(dstate, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
+			
 			if(stalling == 1)
 			{
 				stalling = 0;
@@ -163,15 +183,24 @@ int main(int argc, char* argv[]){
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
 			//dumpROBState(robState);
-			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);	
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
 
 			CurCycle = CurCycle + 1;
 
+			
 			if(stalling !=1)
 			{
 				mips_state.pc = tempNPC;
 			}
 
+			/*
+			if(pipeStateALU.wbPC == ADDR_NULL){
+				std::cout << "Dumping Pipe Diagram" << endl;
+				dumpPipeDiagram(dstate);
+			}
+			*/
+			
+			
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 
 			if(!pipeStateALU.wb){
@@ -180,7 +209,7 @@ int main(int argc, char* argv[]){
 			
 		};
     }
-
+//
 	catch (const int EXIT_CODE){		//Exceptions and Errors are caught here
 		cout << CurCycle << " \n";
 		switch(EXIT_CODE){

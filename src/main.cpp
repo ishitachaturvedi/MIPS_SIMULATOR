@@ -2,108 +2,57 @@
 #include "mips.hpp"
 #include <string>
 #include <cstdint>
-#include <fstream>
-#include <iomanip>
 
 using namespace std;
 
-int main(int argc, char* argv[]){	
+int main(int argc, char* argv[]){
 	
 	int CurCycle = 0;
-   	try{						//Exception and Error handling
+   try{						//Exception and Error handling
 
-		if(argc != 2){
-			std::cerr << "Error: Expected a Binary file a input" << std::endl;
-			exit(1);
+	if(argc != 2){
+		std::cerr << "Error: Expected a Binary file a input" << std::endl;
+		exit(1);
+	}
+
+	string fileName(argv[1]);
+	int32_t tempNPC;
+	bool executed;				//this flag is turned on when an instruction of one of the 3 types has been executed
+	State mips_state;	
+
+	mips_state.ram.resize(MEM_SIZE);	//This will allocate memory for the whole RAM
+
+	
+	setUp(mips_state, fileName);		//Passes the instructions to the vector
+
+	for(;;){
+
+		if(mips_state.pc == ADDR_NULL) {
+			std::cout << "Cycle Count: " << CurCycle << endl;
 		}
+		checkExec(mips_state.reg, mips_state.pc); //checks if the address is in the executable range
+		mips_state.reg[0] = 0;		//register $0 must retain the value zero in every new clock cycle of the processor
+		executed = false;		//every new clock cycle the flag is turned off since no instruction has yet been executed
+		tempNPC = mips_state.npc;	//Since the instruction that will be executed will change the npc it needs to be stored
 
-		// clear contents of file
-		std::ofstream ofs;
-		ofs.open("pipe_state.out", std::ofstream::out | std::ofstream::trunc);
-		ofs.close();
+		r_type(mips_state,executed);
+		i_type(mips_state,executed);
+		j_type(mips_state,executed);
 
-		string fileName(argv[1]);
-		int32_t tempNPC;
-		bool executed;				//this flag is turned on when an instruction of one of the 3 types has been executed
-		State mips_state;
-		PipeState pipeState;	
-		PipeState_Next pipeState_Next;
-		Decode decode;
+		if(!executed){			//if no instruction from the 3 types has executed at this stage (ie.false), then the binary must be invalid or an unknown error occurred
+			throw (static_cast<int>(Exception::INSTRUCTION));
+		}		
+		
+		mips_state.pc = tempNPC;	//Set the value of pc (the address of the next instruction that is going to execute) to the
+						//original value of npc
 
-		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage
+		CurCycle += 1;
+	};
 
-
-		mips_state.ram.resize(MEM_SIZE);	//This will allocate memory for the whole RAM
-
-		bool is_load = false;
-		bool ex_isload = false;
-
-		setUp(mips_state, fileName);		//Passes the instructions to the vector
-
-		initPipeline(pipeState_Next);
-
-		for(;;){
-
-			mips_state.reg[0] = 0;		//register $0 must retain the value zero in every new clock cycle of the processor
-			executed = false;		//every new clock cycle the flag is turned off since no instruction has yet been executed
-
-			uint32_t instr = mips_state.ram[mips_state.pc];
-
-			//Send Instruction for Decode
-			decode_inst(instr,decode);
-
-			if(stalling !=2)
-			{
-				tempNPC = mips_state.npc;
-			}
-
-			// Execute if not stalling
-			if(stalling != 2)
-			{
-				//Execute Instructions
-				r_type(mips_state,executed,decode);
-				i_type(mips_state,executed,decode,is_load);
-				j_type(mips_state,executed,decode);
-			}
-
-			if(stalling == 3)
-			{
-				stalling = 0;
-			}
-
-			moveOneCycle(mips_state, pipeState, pipeState_Next, executed, CurCycle, stalling, is_load);
-
-			ex_isload = pipeState.ex_isload;
-			
-			//dumpPipeState(pipeState);
-
-			checkForStall(pipeState, ex_isload, stalling);
-
-			CurCycle = CurCycle + 1;
-
-			if(stalling !=1)
-			{
-				mips_state.pc = tempNPC;
-			}
-
-			if(stalling != 0)
-			{
-				stalling = stalling + 1;
-			}
-
-			checkExit(pipeState.wbreg, pipeState.wbPC,CurCycle);
-
-			
-			if(!pipeState.wb){
-				throw (static_cast<int>(Exception::INSTRUCTION));
-			}		
-			
-		};
-
+	
     }
 
 	catch (const int EXIT_CODE){		//Exceptions and Errors are caught here
-		cout << CurCycle << " \n";
 		switch(EXIT_CODE){
 			case 0xFFFFFFF6:
 				std::exit(static_cast<int>(Exception::ARITHMETIC));

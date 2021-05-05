@@ -15,8 +15,6 @@
 using namespace std;
 
 #define ROB_SIZE 16
-#define DIAGRAM_SIZE 50
-#define DIAGRAM_CYCLES 50
 
 
 struct PipeState
@@ -94,15 +92,6 @@ struct PipeState
     bool ex4_isval;
     bool wb_isval;
 
-    // Pipe Diagram slot
-    uint32_t diagram_slot_if;
-    uint32_t diagram_slot_id;
-    uint32_t diagram_slot_ex1;
-    uint32_t diagram_slot_ex2;
-    uint32_t diagram_slot_ex3;
-    uint32_t diagram_slot_ex4;
-    uint32_t diagram_slot_wb;
-
 };
 
 struct PipeState_Next
@@ -169,14 +158,6 @@ struct PipeState_Next
     bool ex3_isval;
     bool ex4_isval;
     bool wb_isval;
-
-    // Pipe Diagram slot
-    uint32_t diagram_slot_id;
-    uint32_t diagram_slot_ex1;
-    uint32_t diagram_slot_ex2;
-    uint32_t diagram_slot_ex3;
-    uint32_t diagram_slot_ex4;
-    uint32_t diagram_slot_wb;
 };
 
 struct ROBState {
@@ -193,31 +174,13 @@ struct ROBState {
 
 };
 
-struct Instr {
 
-    uint32_t instr;
-    string stage[DIAGRAM_CYCLES];
-    bool done;
-    uint32_t commit_cycle;
-
-};
-
-struct DiagramState {
-
-    uint32_t cycle;
-    struct Instr instr[DIAGRAM_SIZE];
-    uint32_t num_instrs;
-    bool is_full;
-
-};
 
 void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState);
 void dumpROBState(ROBState & robState);
-void dumpPipeDiagram(DiagramState & dstate);
-void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, bool is_store, bool is_mulDiv, uint32_t rob_tail, uint32_t diagram_slot);
+void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, bool is_store, bool is_mulDiv, uint32_t rob_tail);
 void initPipeline(PipeState_Next &pipeState_Next);
 void initROB(ROBState &robState);
-void initDiagram(DiagramState &dstate);
 void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling);
-void updatePipeDiagram(DiagramState &dstate, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling);
+
 #endif /* DUMPHPP */

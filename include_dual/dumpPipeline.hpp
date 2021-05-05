@@ -260,6 +260,24 @@ struct ROBState {
     uint32_t commit_instr;
 };
 
+struct Instr {
+
+    uint32_t instr;
+    string stage[DIAGRAM_CYCLES];
+    bool done;
+    uint32_t commit_cycle;
+
+};
+
+struct DiagramState {
+
+    uint32_t cycle;
+    struct Instr instr[DIAGRAM_SIZE];
+    uint32_t num_instrs;
+    bool is_full;
+
+};
+
 void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState, PipeStateIFID & pipeStateIFID);
 void dumpROBState(ROBState & robState);
 void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool&is_RA, bool&is_IA, bool&is_JA, bool&is_RB, bool&is_IB, bool&is_JB, Decode& decodeA, Decode& decodeB, bool&is_md_non_stallA, bool&is_md_non_stallB, uint32_t instrA, uint32_t instrB);
@@ -273,7 +291,7 @@ void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next);
 void moveStalledMEM(PipeState &pipeState, PipeState_Next &pipeState_Next);
 void moveStalledMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next);
 void doROBWork(PipeStateIFID &pipeStateIFID, ROBState & robState, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV);
-void MoveOneCycleIFIDPause(PipeStateIFID &pipeStateIFID, State &mips_state);
+void MoveOneCycleIFIDPause(PipeStateIFID &pipeStateIFID, State &mips_state);void updatePipeDiagram(DiagramState &dstate, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling);
 
 
 #endif /* DUMPHPP */

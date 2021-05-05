@@ -1,128 +1,117 @@
 #include "I_functions.hpp"
-#include <iostream>
 using namespace std;
 
-void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load){
+void i_type(State& mips_state, bool& executed){
 	if(!executed){
-		// uint32_t instr = mips_state.ram[mips_state.pc];
+		uint32_t instr = mips_state.ram[mips_state.pc];
 
-		// uint32_t opcode = (instr & 0xFC000000) >> 26;
-		// uint32_t rs = (instr & 0x03E00000) >> 21;
-		// uint32_t rt= (instr & 0x001F0000) >> 16;
-		// int32_t immediate = instr & 0x0000FFFF;
+		uint32_t opcode = (instr & 0xFC000000) >> 26;
+		uint32_t rs = (instr & 0x03E00000) >> 21;
+		uint32_t rt= (instr & 0x001F0000) >> 16;
+		int32_t immediate = instr & 0x0000FFFF;
 
 		//In our case BranchAddr = SignExtImm;
 
-		// int32_t SignExtImm;
+		int32_t SignExtImm;
 
-		// if(immediate >> 15){
-		// 	SignExtImm = immediate | 0xFFFF0000;
-		// }
-		// else{
-		// 	SignExtImm = immediate;
-		// }
+		if(immediate >> 15){
+			SignExtImm = immediate | 0xFFFF0000;
+		}
+		else{
+			SignExtImm = immediate;
+		}
 
-		is_load = false;
- 
-		switch(decode.opcode){
+		switch(opcode){
 			case 0x00000008:
-				addi(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				addi(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x00000009:
-				addiu(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				addiu(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x0000000C:
-				andi(mips_state, decode.rs, decode.rt, decode.immediate);
+				andi(mips_state, rs, rt, immediate);
 				executed = true;
 				return;
 			case 0x00000004:
-				beq(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				beq(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x00000005:
-				bne(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				bne(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x00000024:
-				lbu(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				lbu(mips_state, rs, rt, SignExtImm);
 				executed = true;
-				is_load = true;
 				return;
 			case 0x00000020:
-				lb(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				lb(mips_state, rs, rt, SignExtImm);
 				executed = true;
-				is_load = true;
 				return;
 			case 0x00000025:
-				lhu(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				lhu(mips_state, rs, rt, SignExtImm);
 				executed = true;
-				is_load = true;
 				return;
 			case 0x00000021:
-				lh(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				lh(mips_state, rs, rt, SignExtImm);
 				executed = true;
-				is_load = true;
 				return;
 			case 0x0000000F:
-				lui(mips_state, decode.rs, decode.rt, decode.immediate);
+				lui(mips_state, rs, rt, immediate);
 				executed = true;
-				is_load = true;
 				return;
 			case 0x00000023:
-				lw(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				lw(mips_state, rs, rt, SignExtImm);
 				executed = true;
-				is_load = true;
 				return;
 			case 0x00000022:
-				lwl(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				lwl(mips_state, rs, rt, SignExtImm);
 				executed = true;
-				is_load = true;
 				return;
 			case 0x00000026:
-				lwr(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				lwr(mips_state, rs, rt, SignExtImm);
 				executed = true;
-				is_load = true;
 				return;
 			case 0x00000028:
-				sb(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				sb(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x00000029:
-				sh(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				sh(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x0000002B:
-				sw(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				sw(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x0000000A:
-				slti(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				slti(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x0000000B:
-				sltiu(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				sltiu(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x0000000E:
-				xori(mips_state, decode.rs, decode.rt, decode.immediate);
+				xori(mips_state, rs, rt, immediate);
 				executed = true;
 				return;
 			case 0x0000000D:
-				ori(mips_state, decode.rs, decode.rt, decode.immediate);
+				ori(mips_state, rs, rt, immediate);
 				executed = true;
 				return;
 			case 0x00000007:
-				bgtz(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				bgtz(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x00000006:
-				blez(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				blez(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			case 0x00000001:
-				bdecoder(mips_state, decode.rs, decode.rt, decode.SignExtImm);
+				bdecoder(mips_state, rs, rt, SignExtImm);
 				executed = true;
 				return;
 			default:

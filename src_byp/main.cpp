@@ -75,7 +75,7 @@ int main(int argc, char* argv[]){
 
 			ex_isload = pipeState.ex_isload;
 			
-			//dumpPipeState(pipeState);
+			dumpPipeState(pipeState);
 
 			checkForStall(pipeState, ex_isload, stalling);
 
@@ -89,6 +89,11 @@ int main(int argc, char* argv[]){
 			if(stalling != 0)
 			{
 				stalling = stalling + 1;
+			}
+
+
+			if(pipeState.wbPC == ADDR_NULL){
+				std::cout << "Cycle Count: " << CurCycle << endl;
 			}
 
 			checkExit(pipeState.wbreg, pipeState.wbPC,CurCycle);

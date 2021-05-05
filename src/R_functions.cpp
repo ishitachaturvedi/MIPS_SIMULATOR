@@ -1,118 +1,117 @@
 #include "R_functions.hpp"
-#include <iostream>
 using namespace std;
 
-void r_type(State& mips_state, bool& executed, Decode& decode){
+void r_type(State& mips_state, bool& executed){
 
-	// uint32_t instr = mips_state.ram[mips_state.pc];
-	// uint32_t opcode = (mips_state.ram[mips_state.pc] >> 26) & 0x0000003F;
-	// uint32_t funct_field = instr & 0x0000003F;
-	// uint32_t shamt_field = (instr & 0x000007C0) >> 6;
-	// uint32_t rd ;
-	// uint32_t rt = (instr & 0x001F0000) >> 16; 
-	// uint32_t rs = (instr & 0x03E00000) >> 21; 	
-
-	if(!executed && decode.opcode_R == 0x00000000){
-		switch(decode.funct_field){
+	uint32_t instr = mips_state.ram[mips_state.pc];
+	uint32_t opcode = (mips_state.ram[mips_state.pc] >> 26) & 0x0000003F;
+	uint32_t funct_field = instr & 0x0000003F;
+	uint32_t shamt_field = (instr & 0x000007C0) >> 6;
+	uint32_t rd = (instr & 0x0000F800) >> 11;
+	uint32_t rt = (instr & 0x001F0000) >> 16; 
+	uint32_t rs = (instr & 0x03E00000) >> 21; 
+	
+	if(!executed && opcode == 0x00000000){
+		switch(funct_field){
 			
 			case 0x00000009:
-					jalr(mips_state, decode.rs, decode.rt, decode.rd);
+					jalr(mips_state, rs, rt, rd);
 					executed = true;
 					return;			
 			case 0x00000020:
-					add(mips_state, decode.rs, decode.rt, decode.rd);
+					add(mips_state, rs, rt, rd);
 					executed = true;
 					return;			
 			case 0x00000021:
-					addu(mips_state, decode.rs, decode.rt, decode.rd);
+					addu(mips_state, rs, rt, rd);
 					executed = true;
 					return;
 			case 0x00000024:
-					And(mips_state, decode.rs, decode.rt, decode.rd);
+					And(mips_state, rs, rt, rd);
 					executed = true;
 					return;
 			case 0x00000008:
-					jr(mips_state,decode.rs);
+					jr(mips_state,rs);
 					executed = true;
 					return;
 			case 0x00000025:
-					Or(mips_state, decode.rs, decode.rt, decode.rd);
+					Or(mips_state, rs, rt, rd);
 					executed = true;
 					return;
 			case 0x0000002A:
-					slt(mips_state, decode.rs, decode.rt, decode.rd);
+					slt(mips_state, rs, rt, rd);
 					executed = true;
 					return;
 			case 0x0000002B:
-					sltu(mips_state, decode.rs, decode.rt, decode.rd);
+					sltu(mips_state, rs, rt, rd);
 					executed = true;
 					return;
 			case 0x00000000:
-					sll(mips_state, decode.rt, decode.shamt_field, decode.rd);
+					sll(mips_state, rt, shamt_field, rd);
 					executed = true;
 					return;
 			case 0x00000002:
-					srl(mips_state, decode.rt, decode.shamt_field, decode.rd);
+					srl(mips_state, rt, shamt_field, rd);
 					executed = true;
 					return;
 			case 0x00000022:
-					sub(mips_state, decode.rs, decode.rt, decode.rd);
+					sub(mips_state, rs, rt, rd);
 					executed = true;
 					return;
 			case 0x00000023:
-					subu(mips_state, decode.rs, decode.rt, decode.rd);
+					subu(mips_state, rs, rt, rd);
 					executed = true;
 					return;
 			case 0x0000001A:
-					div(mips_state, decode.rt, decode.rs);
+					div(mips_state, rt, rs);
 					executed = true;
 					return;
 			case 0x0000001B:
-					divu(mips_state, decode.rt, decode.rs);
+					divu(mips_state, rt, rs);
 					executed = true;
 					return;
 			case 0x00000010:
-					mfhi(mips_state, decode.rd);
+					mfhi(mips_state, rd);
 					executed = true;
 					return;
 			case 0x00000012:
-					mflo(mips_state, decode.rd);
+					mflo(mips_state, rd);
 					executed = true;
 					return;
 			case 0x00000018:
-					mult(mips_state, decode.rt, decode.rs);
+					mult(mips_state, rt, rs);
 					executed = true;
 					return;
 			case 0x00000019:
-					multu(mips_state, decode.rt, decode.rs);
+					multu(mips_state, rt, rs);
 					executed = true;
 					return;
 			case 0x00000003:
-					sra(mips_state, decode.rt, decode.shamt_field, decode.rd);
+					sra(mips_state, rt, shamt_field, rd);
 					executed = true;
 					return;
 			case 0x00000011:
-					mthi(mips_state, decode.rs);
+					mthi(mips_state,rs);
 					executed = true;
 					return;
 			case 0x00000013:
-					mtlo(mips_state, decode.rs);
+					mtlo(mips_state,rs);
 					executed = true;
 					return;
 			case 0x00000004:
-					sllv(mips_state,decode.rt,decode.rs,decode.rd);
+					sllv(mips_state,rt,rs,rd);
 					executed = true;
 					return;
 			case 0x00000007:
-					srav(mips_state,decode.rt,decode.rs,decode.rd);
+					srav(mips_state,rt,rs,rd);
 					executed = true;
 					return;
 			case 0x00000006:
-					srlv(mips_state,decode.rt,decode.rs,decode.rd);
+					srlv(mips_state,rt,rs,rd);
 					executed = true;
 					return;
 			case 0x00000026:
-					Xor(mips_state,decode.rt,decode.rs,decode.rd);
+					Xor(mips_state,rt,rs,rd);
 					executed = true;
 					return;
 			default:

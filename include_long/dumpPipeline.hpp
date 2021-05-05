@@ -71,6 +71,24 @@ struct PipeState
     bool ex1_isMulDiv;
     bool ex2_isMulDiv;
     bool ex3_isMulDiv;
+
+    // Instruction is valid - for ROB
+    bool if_isval;
+    bool id_isval;
+    bool ex1_isval;
+    bool ex2_isval;
+    bool ex3_isval;
+    bool ex4_isval;
+    bool wb_isval;
+
+    // Pipe Diagram slot
+    uint32_t diagram_slot_if;
+    uint32_t diagram_slot_id;
+    uint32_t diagram_slot_ex1;
+    uint32_t diagram_slot_ex2;
+    uint32_t diagram_slot_ex3;
+    uint32_t diagram_slot_ex4;
+    uint32_t diagram_slot_wb;
 };
 
 struct PipeState_Next
@@ -124,11 +142,51 @@ struct PipeState_Next
     bool ex1_isMulDiv;
     bool ex2_isMulDiv;
     bool ex3_isMulDiv;
+
+    // Instruction is valid - for ROB
+    bool if_isval;
+    bool id_isval;
+    bool ex1_isval;
+    bool ex2_isval;
+    bool ex3_isval;
+    bool ex4_isval;
+    bool wb_isval;
+
+    // Pipe Diagram slot
+    uint32_t diagram_slot_id;
+    uint32_t diagram_slot_ex1;
+    uint32_t diagram_slot_ex2;
+    uint32_t diagram_slot_ex3;
+    uint32_t diagram_slot_ex4;
+    uint32_t diagram_slot_wb;
 };
 
+struct Instr {
+
+    uint32_t instr;
+    string stage[DIAGRAM_CYCLES];
+    bool done;
+    uint32_t commit_cycle;
+
+};
+
+struct DiagramState {
+
+    uint32_t cycle;
+    struct Instr instr[DIAGRAM_SIZE];
+    uint32_t num_instrs;
+    bool is_full;
+
+};
+
+
 void dumpPipeState(PipeState & state);
-void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, int stalling, bool is_load, bool is_mulDiv);
+void dumpPipeDiagram(DiagramState & dstate);
+void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, bool is_mulDiv, uint32_t diagram_slot);
 void initPipeline(PipeState_Next &pipeState_Next);
+void initDiagram(DiagramState &dstate);
 void checkForStall(PipeState & pipeState, int &stalling);
+void updatePipeDiagram(DiagramState &dstate, PipeState &pipeState, int &stalling);
+
 
 #endif /* DUMPHPP */
