@@ -77,13 +77,6 @@ struct PipeState
     bool ex4_isval;
     bool wb_isval;
 
-    // Pipe Diagram slot
-    uint32_t diagram_slot_ex1;
-    uint32_t diagram_slot_ex2;
-    uint32_t diagram_slot_ex3;
-    uint32_t diagram_slot_ex4;
-    uint32_t diagram_slot_wb;
-
 };
 
 struct PipeState_Next
@@ -141,13 +134,6 @@ struct PipeState_Next
     bool ex3_isval;
     bool ex4_isval;
     bool wb_isval;
-
-    // Pipe Diagram slot
-    uint32_t diagram_slot_ex1;
-    uint32_t diagram_slot_ex2;
-    uint32_t diagram_slot_ex3;
-    uint32_t diagram_slot_ex4;
-    uint32_t diagram_slot_wb;
 };
 
 struct PipeStateIFID
@@ -226,15 +212,6 @@ struct PipeStateIFID
     uint32_t rob_fill_slot_idB;
     uint32_t rob_fill_slot_exB;
 
-    // Pipe Diagram slots
-    uint32_t diagram_slot_ifA;
-    uint32_t diagram_slot_idA;
-    uint32_t diagram_slot_exA;
-
-    uint32_t diagram_slot_ifB;
-    uint32_t diagram_slot_idB;
-    uint32_t diagram_slot_exB;
-
     // Instruction is valid - for ROB
     bool if_isvalA;
     bool id_isvalA;
@@ -303,21 +280,18 @@ struct DiagramState {
 
 void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState, PipeStateIFID & pipeStateIFID);
 void dumpROBState(ROBState & robState);
-void dumpPipeDiagram(DiagramState & dstate);
 void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool&is_RA, bool&is_IA, bool&is_JA, bool&is_RB, bool&is_IB, bool&is_JB, Decode& decodeA, Decode& decodeB, bool&is_md_non_stallA, bool&is_md_non_stallB, uint32_t instrA, uint32_t instrB);
 void moveOneCycle(State &mips_state, PipeStateIFID &pipeStateIFID, PipeState &pipeStateMULDIV, PipeState_Next &pipeState_NextMULDIV, PipeState &pipeStateALU, PipeState_Next &pipeState_NextALU, PipeState &pipeStateMEM, PipeState_Next &pipeState_NextMEM, bool executedA, bool executedB, int & CurCycle, uint32_t instrA, uint32_t instrB, int& stalling, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, uint32_t rob_tail, bool& hazard, uint32_t pc_A, uint32_t pc_B, std::vector<int32_t> regA, std::vector<int32_t> regB, bool&is_md_non_stallA, bool&is_md_non_stallB, bool &pause_for_jump_branch);
 void initPipeline(PipeState_Next &pipeState_Next);
 void initPipelineIFID(PipeStateIFID &pipeStateIFID);
 void initROB(ROBState &robState);
-void initDiagram(DiagramState &dstate);
 void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling, PipeStateIFID &pipeStateIFID);
-void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t rob_tail, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB, int& stalling);
+void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t rob_tail, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB);
 void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next);
 void moveStalledMEM(PipeState &pipeState, PipeState_Next &pipeState_Next);
 void moveStalledMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next);
 void doROBWork(PipeStateIFID &pipeStateIFID, ROBState & robState, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV);
 void MoveOneCycleIFIDPause(PipeStateIFID &pipeStateIFID, State &mips_state);void updatePipeDiagram(DiagramState &dstate, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling);
-void updatePipeDiagram(DiagramState &dstate, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling, PipeStateIFID &pipeStateIFID);
 
 
 #endif /* DUMPHPP */
