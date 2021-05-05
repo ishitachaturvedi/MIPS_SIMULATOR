@@ -57,24 +57,16 @@ int main(int argc, char* argv[]){
 
 			uint32_t instr_executed = NOP;
 
-			if(stalling !=2)
-			{
-				tempNPC = mips_state.npc;
-			}
 
 			// Execute if not stalling
-			if(stalling != 2)
+			if(stalling != 1)
 			{
+				tempNPC = mips_state.npc;
 				//Execute Instructions
 				r_type(mips_state,executed,decode);
 				i_type(mips_state,executed,decode,is_load);
 				j_type(mips_state,executed,decode);
 				instr_executed = instr;
-			}
-
-			if(stalling == 3)
-			{
-				stalling = 0;
 			}
 
 			moveOneCycle(mips_state, pipeState, pipeState_Next, executed, CurCycle, instr_executed, stalling, is_load, dstate.num_instrs);
@@ -95,6 +87,10 @@ int main(int argc, char* argv[]){
 
 			updatePipeDiagram(dstate, pipeState, stalling);
 
+			if(stalling == 1)
+			{
+				stalling = 0;
+			}
 
 			ex_isload = pipeState.ex_isload;
 			
@@ -108,18 +104,14 @@ int main(int argc, char* argv[]){
 			{
 				mips_state.pc = tempNPC;
 			}
-
-			if(stalling != 0)
-			{
-				stalling = stalling + 1;
-			}
-
-
+			
+			/*
 			if(pipeState.wbPC == ADDR_NULL){
 				std::cout << "Cycle Count: " << CurCycle << endl;
 			}
 
-						
+			*/
+
 			if(pipeState.wbPC == ADDR_NULL){
 				std::cout << "Dumping Pipe Diagram" << endl;
 				dumpPipeDiagram(dstate);

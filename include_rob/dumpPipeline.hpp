@@ -208,7 +208,6 @@ struct DiagramState {
     struct Instr instr[DIAGRAM_SIZE];
     uint32_t num_instrs;
     bool is_full;
-
 };
 
 void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState);

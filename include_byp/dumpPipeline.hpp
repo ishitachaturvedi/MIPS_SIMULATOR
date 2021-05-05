@@ -34,6 +34,8 @@ struct PipeState
     std::vector<int32_t> memreg;
     std::vector<int32_t> wbreg;
 
+    bool IF;
+    bool id;
     bool ex;
     bool mem;
     bool wb;
@@ -73,6 +75,8 @@ struct PipeState_Next
     std::vector<int32_t> memreg;
     std::vector<int32_t> wbreg;
 
+    bool id;
+    bool ex;
     bool mem;
     bool wb;
 

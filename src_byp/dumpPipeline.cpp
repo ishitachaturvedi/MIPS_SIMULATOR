@@ -82,7 +82,9 @@ void checkForStall(PipeState &pipeState, bool is_load, int &stalling)
     decode_inst(pipeState.idInstr, id);
     decode_inst(pipeState.exInstr, ex);
 
-    if((id.rs == ex.rt || id.rd == ex.rt) && ex.rt != 0x0 && is_load && stalling == 0)
+    if(
+        ((id.rs == ex.rt || id.rd == ex.rt) && ex.rt != 0x0 && pipeState.ex_isload && (pipeState.exInstr != pipeState.wbInstr))
+    )
     {
         stalling = 1;
     }
@@ -91,7 +93,7 @@ void checkForStall(PipeState &pipeState, bool is_load, int &stalling)
 //move pipeline one cycle forward
 void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, uint32_t diagram_slot)
 {
-    if(stalling != 2)
+    if(stalling != 1)
     {    
         pipeState.cycle = CurCycle;
         pipeState.ifInstr = mips_state.ram[mips_state.pc];
@@ -137,6 +139,7 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
         pipeState_Next.mem = pipeState.ex;
         pipeState_Next.wb = pipeState_Next.mem;
 
+
         //is_load
         pipeState.if_isload = is_load;
         pipeState.id_isload = pipeState_Next.id_isload;
@@ -171,11 +174,12 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
         pipeState_Next.diagram_slot_id = pipeState.diagram_slot_if;
     }
 
-    if(stalling == 2)
+    if(stalling == 1)
     {
         pipeState.cycle = CurCycle;
         pipeState.wbInstr = pipeState.memInstr;
         pipeState.memInstr = pipeState.exInstr;
+
         pipeState_Next.wbInstr =  pipeState.memInstr;
 
         // iNSTRUCTION Valid

@@ -111,12 +111,12 @@ int main(int argc, char* argv[]){
 			}
 			*/
 			
-			/*
+			
 			if(pipeState.wbPC == ADDR_NULL){
 				std::cout << "Dumping Pipe Diagram" << endl;
 				dumpPipeDiagram(dstate);
 			}
-			*/
+			
 			
 
 			checkExit(pipeState.wbreg, pipeState.wbPC,CurCycle);
