@@ -1,3 +1,5 @@
+// 5-stage fully bypassed MIPS processor
+
 #include <iostream>
 #include "mips.hpp"
 #include <string>
@@ -17,32 +19,48 @@ int main(int argc, char* argv[]){
 			exit(1);
 		}
 
-		// clear contents of file
+		// clear contents of pipedump and pipediagram
 		std::ofstream ofs;
 		ofs.open("pipe_state.out", std::ofstream::out | std::ofstream::trunc);
 		ofs.close();
+		ofs.open("pipe_diagram.out", std::ofstream::out | std::ofstream::trunc);
+		ofs.close();
 
 		string fileName(argv[1]);
+		// store pc of the next instruction to be issued
 		int32_t tempNPC;
-		bool executed;				//this flag is turned on when an instruction of one of the 3 types has been executed
+		//this flag is turned on when an instruction of one of the 3 types has been executed
+		bool executed;	
+		// this data structure keeps note of the next pc and the state of the memory		
 		State mips_state;
+		// this datastructure stores the pipeline state and moves it forward one step for each cycle
 		PipeState pipeState;	
+		// this datastructure stores the state for what the pipeline will look like in the next cycle
 		PipeState_Next pipeState_Next;
+		// datastructure to store decoded instruction
 		Decode decode;
 
+		// datastructure to store the state of the pipeline diagram per cycle
 		DiagramState dstate;
+
+		// initialise the pipeline diagram
 		initDiagram(dstate);
 
-		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage
+		//stall for 1 extra cycle for LD stalls which are resolved in mem stage
+		// IF and ID are stalled when stalling = 1
+		int stalling = 0; 
 
+		//This will allocate memory for the whole RAM
+		mips_state.ram.resize(MEM_SIZE);	
 
-		mips_state.ram.resize(MEM_SIZE);	//This will allocate memory for the whole RAM
-
+		// is_load checks if instruction is a load instruction
 		bool is_load = false;
 		bool ex_isload = false;
 
-		setUp(mips_state, fileName);		//Passes the instructions to the vector
+		//Passes the instructions to the vector
+		setUp(mips_state, fileName);		
 
+		// initilaise the pipeline
 		initPipeline(pipeState_Next);
 
 		for(;;){
@@ -50,6 +68,7 @@ int main(int argc, char* argv[]){
 			mips_state.reg[0] = 0;		//register $0 must retain the value zero in every new clock cycle of the processor
 			executed = false;		//every new clock cycle the flag is turned off since no instruction has yet been executed
 
+			// Fetch the instruction to be executed
 			uint32_t instr = mips_state.ram[mips_state.pc];
 
 			//Send Instruction for Decode
@@ -57,8 +76,8 @@ int main(int argc, char* argv[]){
 
 			uint32_t instr_executed = NOP;
 
-
-			// Execute if not stalling
+			// If the pipeline is not stalling at IF and ID stage because of load stalls, execute the fetched instruction
+			// IF, ID, EX, MEM, WB are done in one cycle, the values are propogated down an architectural pipeline 
 			if(stalling != 1)
 			{
 				tempNPC = mips_state.npc;
@@ -69,10 +88,11 @@ int main(int argc, char* argv[]){
 				instr_executed = instr;
 			}
 
+			// The instruction just executed is now sent down the pipeline. Even though it has executed it is shown to be in the "IF" stage to the user
+			// in the next cycle it will be in the ID stage, then EX and finally WB
 			moveOneCycle(mips_state, pipeState, pipeState_Next, executed, CurCycle, instr_executed, stalling, is_load, dstate.num_instrs);
 
 			// Pipe Diagram Allocate
-			
 			if (executed && (instr != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
 				dstate.instr[dstate.num_instrs].instr = instr;
 				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF ";
@@ -85,8 +105,10 @@ int main(int argc, char* argv[]){
 				}
 			}
 
+			// update the pipeline diagram for the new instruction
 			updatePipeDiagram(dstate, pipeState, stalling);
 
+			// if stalling was present in the last cycle, mark it as zero and check again if this cycle will need to be stalled
 			if(stalling == 1)
 			{
 				stalling = 0;
@@ -94,33 +116,30 @@ int main(int argc, char* argv[]){
 
 			ex_isload = pipeState.ex_isload;
 			
+			// update the pipeline dump
 			dumpPipeState(pipeState);
 
+			// check if there needs to be a stall in the next cycle for a load RAW dependece
 			checkForStall(pipeState, ex_isload, stalling);
 
 			CurCycle = CurCycle + 1;
 
+			// update the present pc to the NPC only if there is no stall
 			if(stalling !=1)
 			{
 				mips_state.pc = tempNPC;
 			}
 			
-			/*
-			if(pipeState.wbPC == ADDR_NULL){
-				std::cout << "Cycle Count: " << CurCycle << endl;
-			}
-
-			*/
-
+			// if end of program has been reached, dump the pipeline diagram
 			if(pipeState.wbPC == ADDR_NULL){
 				std::cout << "Dumping Pipe Diagram" << endl;
 				dumpPipeDiagram(dstate);
 			}
 			
-
+			// check if the end of program has reached and exit the simulator
 			checkExit(pipeState.wbreg, pipeState.wbPC,CurCycle);
 
-			
+			// if the writeback stage has an illegal instruction, throw instruction exception
 			if(!pipeState.wb){
 				throw (static_cast<int>(Exception::INSTRUCTION));
 			}		
@@ -129,7 +148,8 @@ int main(int argc, char* argv[]){
 
     }
 
-	catch (const int EXIT_CODE){		//Exceptions and Errors are caught here
+	// catch Exceptions and errors
+	catch (const int EXIT_CODE){}
 		cout << CurCycle << " \n";
 		switch(EXIT_CODE){
 			case 0xFFFFFFF6:

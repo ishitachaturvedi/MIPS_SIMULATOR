@@ -1,6 +1,7 @@
 #include "R_functions.hpp"
 using namespace std;
 
+// execute Register instruction for this cycle
 void r_type(State& mips_state, bool& executed){
 
 	uint32_t instr = mips_state.ram[mips_state.pc];

@@ -1,6 +1,7 @@
 #include "I_functions.hpp"
 using namespace std;
 
+// execute Imm instruction for this cycle
 void i_type(State& mips_state, bool& executed){
 	if(!executed){
 		uint32_t instr = mips_state.ram[mips_state.pc];

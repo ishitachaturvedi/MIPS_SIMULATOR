@@ -83,7 +83,7 @@ enum FUN_IDS
     FUN_XOR = 0x26
 };
 
-
+// check for data stalls where data cannot be bypased (load instruction in EX stage)
 void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling)
 {
     // Get current instruction in decode
@@ -127,16 +127,6 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
         
     }
 
-
-    // DEBUG CODE - NIMRA
-    /*
-    std::cout << "Cycle: " << pipeStateALU.cycle << " ------- Stalling = " << stalling << endl;
-    std::cout  << "--------------------------------------------------------------------------" << endl;
-    std::cout  << "id.rs = " << id.rs <<  ", id.rd = " << id.rd << ", ex1MEM.rt = " << ex1MEM.rt << ", pipeStateMEM.ex1_isload = " << pipeStateMEM.ex1_isload << endl;
-    std::cout  << "--------------------------------------------------------------------------" << endl;
-    */
-
-
     // if ex1, ex2, ex3 are mulDiv inst which is being waited on, we stall
     if(
         (((id.rs == ex1MD.rd || id.rt == ex1MD.rd) && ex1MD.rd != 0x0 && pipeStateMULDIV.ex1_isMulDiv && !(pipeStateMULDIV.ex1Instr == pipeStateMULDIV.ex3Instr))
@@ -149,7 +139,7 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
 }
 
 
-//move pipeline one cycle forward
+//move pipeline one cycle forward, pass values down the correct pipe ALU, MEM, MULDIV
 void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, bool is_store, bool is_mulDiv)
 {
     std::flush(std::cout);
@@ -390,6 +380,7 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
     }
 }
 
+// initialise pipeline stages
 void initPipeline(PipeState_Next &pipeState_Next)
 {
     pipeState_Next.idInstr = 0x0;
@@ -456,6 +447,7 @@ static const string regNames[NUM_REGS] = {
     "$ra",
 };
 
+// get function name to add to pipeline diagram and pipeline dump
 static string getFunString(uint8_t funct)
 {
     switch(funct)
@@ -517,6 +509,7 @@ static string getFunString(uint8_t funct)
     }
 }
 
+// get imm instruction name for pipeline dump and pipeline diagram
 static string getImmString(uint8_t opcode)
 {
     switch(opcode)
@@ -573,6 +566,7 @@ static string getImmString(uint8_t opcode)
     }
 }
 
+// get jump instruction name for pipeline dump and pipeline diagram
 static void handleJInst(uint32_t instr, ostream & out_stream)
 {
     uint8_t opcode = (instr >> 26) & 0x3f;
@@ -593,6 +587,7 @@ static void handleJInst(uint32_t instr, ostream & out_stream)
     out_stream << left << setw(25) << sb.str();
 }
 
+/// output imm instruction name for pipeline dump and pipeline diagram
 static void handleImmInst(uint32_t instr, ostream & out_stream)
 {
     uint8_t opcode = (instr >> 26) & 0x3f;
@@ -668,6 +663,7 @@ static void handleImmInst(uint32_t instr, ostream & out_stream)
     out_stream << left << setw(25) << sb.str();
 }
 
+// output reg instruction name for pipeline dump and pipeline diagram
 static void handleOpZeroInst(uint32_t instr, ostream & out_stream)
 {
     uint8_t rs = (instr >> 21) & 0x1f;
@@ -703,6 +699,7 @@ static void handleOpZeroInst(uint32_t instr, ostream & out_stream)
     out_stream << left << setw(25) << sb.str();
 }
 
+// function to print reg, imm, jump instructions for pipeline dump
 static void printInstr(uint32_t curInst, ostream & pipeState)
 {
     if(curInst == 0xfeedfeed)
@@ -761,6 +758,7 @@ static void printInstr(uint32_t curInst, ostream & pipeState)
     }
 }
 
+// function to output pipeline dump per cycle
 void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV)
 {
 

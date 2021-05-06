@@ -2,25 +2,9 @@
 #include <iostream>
 using namespace std;
 
+// execute Imm instruction for this cycle
 void i_type(State& mips_state, bool& executed, Decode& decode, bool& is_load){
 	if(!executed){
-		// uint32_t instr = mips_state.ram[mips_state.pc];
-
-		// uint32_t opcode = (instr & 0xFC000000) >> 26;
-		// uint32_t rs = (instr & 0x03E00000) >> 21;
-		// uint32_t rt= (instr & 0x001F0000) >> 16;
-		// int32_t immediate = instr & 0x0000FFFF;
-
-		//In our case BranchAddr = SignExtImm;
-
-		// int32_t SignExtImm;
-
-		// if(immediate >> 15){
-		// 	SignExtImm = immediate | 0xFFFF0000;
-		// }
-		// else{
-		// 	SignExtImm = immediate;
-		// }
 
 		is_load = false;
  

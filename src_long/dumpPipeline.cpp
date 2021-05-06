@@ -74,7 +74,7 @@ enum FUN_IDS
     FUN_XOR = 0x26
 };
 
-
+// check for data stalls where data cannot be bypased (load instruction in EX stage and MULDIV instructions)
 void checkForStall(PipeState &pipeState, int &stalling)
 {
     Decode id;
@@ -108,7 +108,7 @@ void checkForStall(PipeState &pipeState, int &stalling)
     }
 }
 
-//move pipeline one cycle forward
+//move pipeline one cycle forward, pass values down the pipeline
 void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeState_Next, int executed, int CurCycle, uint32_t instr, int stalling, bool is_load, bool is_mulDiv, uint32_t diagram_slot)
 {
     std::flush(std::cout);
@@ -277,6 +277,7 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
     }
 }
 
+// initialise pipeline stages
 void initPipeline(PipeState_Next &pipeState_Next)
 {
     pipeState_Next.idInstr = 0x0;
@@ -302,6 +303,7 @@ void initPipeline(PipeState_Next &pipeState_Next)
 
 }
 
+// initialise pipeline diagram
 void initDiagram(DiagramState &dstate)
 {
     dstate.cycle = 0;
@@ -317,6 +319,7 @@ void initDiagram(DiagramState &dstate)
     }
 }
 
+// update pipeline diagram for each instruction in the pipeline per cycle
 void updatePipeDiagram(DiagramState &dstate, PipeState &pipeState, int &stalling)
 {
     uint32_t cycle = dstate.cycle;
@@ -400,6 +403,7 @@ static const string regNames[NUM_REGS] = {
     "$ra",
 };
 
+// get function name to add to pipeline diagram and pipeline dump
 static string getFunString(uint8_t funct)
 {
     switch(funct)
@@ -461,6 +465,7 @@ static string getFunString(uint8_t funct)
     }
 }
 
+// get imm instruction name for pipeline dump and pipeline diagram
 static string getImmString(uint8_t opcode)
 {
     switch(opcode)
@@ -517,6 +522,7 @@ static string getImmString(uint8_t opcode)
     }
 }
 
+// get jump instruction name for pipeline dump and pipeline diagram
 static void handleJInst(uint32_t instr, ostream & out_stream)
 {
     uint8_t opcode = (instr >> 26) & 0x3f;
@@ -537,6 +543,7 @@ static void handleJInst(uint32_t instr, ostream & out_stream)
     out_stream << left << setw(25) << sb.str();
 }
 
+// output imm instruction name for pipeline dump and pipeline diagram
 static void handleImmInst(uint32_t instr, ostream & out_stream)
 {
     uint8_t opcode = (instr >> 26) & 0x3f;
@@ -612,6 +619,7 @@ static void handleImmInst(uint32_t instr, ostream & out_stream)
     out_stream << left << setw(25) << sb.str();
 }
 
+// output reg instruction name for pipeline dump and pipeline diagram
 static void handleOpZeroInst(uint32_t instr, ostream & out_stream)
 {
     uint8_t rs = (instr >> 21) & 0x1f;
@@ -647,6 +655,7 @@ static void handleOpZeroInst(uint32_t instr, ostream & out_stream)
     out_stream << left << setw(25) << sb.str();
 }
 
+// function to print reg, imm, jump instructions for pipeline dump
 static void printInstr(uint32_t curInst, ostream & pipeState)
 {
     if(curInst == 0xfeedfeed)
@@ -705,6 +714,7 @@ static void printInstr(uint32_t curInst, ostream & pipeState)
     }
 }
 
+// function to output pipeline dump per cycle 
 void dumpPipeState(PipeState & state)
 {
 
@@ -737,7 +747,7 @@ void dumpPipeState(PipeState & state)
     }
 }
 
-
+// function to print pipeline diagram per cycle
 void dumpPipeDiagram(DiagramState & dstate)
 {
 

@@ -1,7 +1,7 @@
 #include "J_functions.hpp"
 using namespace std;
 
-
+// execute Jump instruction for this cycle
 void j_type(State& mips_state, bool& executed){
 	if(!executed){
 		int32_t instr = mips_state.ram[mips_state.pc];

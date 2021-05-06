@@ -2,6 +2,7 @@
 using namespace std;
 #include <iostream>
 
+// Function to decode an instruction and save it in decode structure
 void decode_inst(uint32_t instr, Decode& decode)
 {
     decode.opcode = (instr & 0xFC000000) >> 26;

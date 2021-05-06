@@ -1,3 +1,6 @@
+// original code we started with 
+// there is no pipelining, each instruction takes 1 cycle to complete
+
 #include <iostream>
 #include "mips.hpp"
 #include <string>
@@ -35,6 +38,7 @@ int main(int argc, char* argv[]){
 		executed = false;		//every new clock cycle the flag is turned off since no instruction has yet been executed
 		tempNPC = mips_state.npc;	//Since the instruction that will be executed will change the npc it needs to be stored
 
+		// execute the instruction
 		r_type(mips_state,executed);
 		i_type(mips_state,executed);
 		j_type(mips_state,executed);
