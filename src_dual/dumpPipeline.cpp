@@ -484,6 +484,9 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         else
         dstate.is_full = true;
 
+        pipeStateIFID.ex_isvalA = true;
+        pipeStateIFID.ex_isvalB = true;
+
     }
 
     else if ( pipeStateIFID.stall_state_EX == 2)
@@ -501,6 +504,9 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.ex1B = false;
 
         pipeStateIFID.diagram_slot_exA = diagram_slot;
+
+        pipeStateIFID.ex_isvalA = true;
+        pipeStateIFID.ex_isvalB = false;
     }
 
     else if ( pipeStateIFID.stall_state_EX == 1)
@@ -519,6 +525,9 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.ex1B = true;
 
         pipeStateIFID.diagram_slot_exB = diagram_slot;
+
+        pipeStateIFID.ex_isvalA = false;
+        pipeStateIFID.ex_isvalB = true;
     }
 
     {
@@ -590,15 +599,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
     }
 
 
-
-    {
-        pipeStateIFID.ex_isvalA = pipeStateIFID.id_isvalA;
-        pipeStateIFID.id_isvalA = pipeStateIFID.if_isvalA;
-
-        pipeStateIFID.ex_isvalB = pipeStateIFID.id_isvalB;
-        pipeStateIFID.id_isvalB = pipeStateIFID.if_isvalB;
-    }
-
     //change if only when not stalling front end
     {
         pipeStateIFID.is_hazard_IF = hazard;
@@ -614,8 +614,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.if_isstoreB = is_storeB;
         pipeStateIFID.IFA = executedA;
         pipeStateIFID.IFB = executedB;
-        pipeStateIFID.if_isvalA = is_valA;
-        pipeStateIFID.if_isvalB = is_valB;
     }
 
 }
