@@ -17,6 +17,9 @@
 #define ADDR_PUTC 0x0C000001
 #define MEM_SIZE 0x0C000002
 
+#define DIAGRAM_SIZE 50
+#define DIAGRAM_CYCLES 50
+
 //This Data Structure represents the current state of the processors "memory"
 struct State{
 	std::vector<int32_t> ram;
