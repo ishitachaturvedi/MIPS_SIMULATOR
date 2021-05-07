@@ -52,10 +52,8 @@ Test toTest(const std::string& line){
 
 
 //Initially, we also added this function to output a .CSV file. Might be useful in the future when we fully implement MIPS IV (LOL)
-/*
 void toCSV(std::ofstream& output, const std::vector<Test>& v){
 	for(int i(0); i < v.size(); i++){
 		output << v[i].getId() << "," << v[i].getInstruction() << "," << v[i].getResult() << "," << v[i].getAuthor() << "," << v[i].getMessage() << std::endl;
 	}
 }
-*/

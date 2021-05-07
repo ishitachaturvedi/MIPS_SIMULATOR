@@ -282,22 +282,22 @@ int main(int argc, char* argv[]){
 				stalling = 0;
 			}
 
+			dumpROBState(robState);
+			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID);
+
+
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling, pipeStateIFID);
 
 			CurCycle = CurCycle + 1;
 
-			/*
 			if(pipeStateALU.wbPC == ADDR_NULL){
-				std::cout << "Cycle Count: " << CurCycle << endl;
+				//std::cout << "Dumping Pipe Diagram" << endl;
+				//dumpPipeDiagram(dstate);
+				ofstream result_out("cycle_counts.out", ios::app);
+				result_out << fileName << "," << CurCycle << endl;
 			}
-			*/
-			
-			if(pipeStateALU.wbPC == ADDR_NULL){
-				std::cout << "Dumping Pipe Diagram" << endl;
-				dumpPipeDiagram(dstate);
-			}
-			
+
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 
 			if(!pipeStateALU.wb){

@@ -1,22 +1,167 @@
-jr1,jr,PASS,vgr16,A single JR instruction to Address 0x0
-addi1,addi,PASS,vgr16,Adding a constant to $2 followed be a jr insturction
-addi2,addi,PASS,vgr16,Adding 1024 to $2 in an infinite loop (Expect overflow)
-addi3,addi,PASS,vgr16,Adding 0x8000(-32768) from $2 in an infinite loop (Expect overflow)
-addiu1,addiu,PASS,vgr16,Adding 0xFFFF to $2 followed be a jr
-andi1,andi,PASS,vgr16,No Message
-beq1,beq,PASS,vgr16,Branching to INSTR_ADDR - 1 (Expect memory exception)
-bgez1,bgez,PASS,vgr16,Branching to INSTR_ADDR - 1 (Expect memory exception)
-bgezal1,bgezal,PASS,vgr16,No Message
-bgtz1,bgtz,PASS,vgr16,No Message
-blez1,blez,PASS,vgr16,No Message
-lb1,lb,PASS,vgr16,No Message
-lb2,lb,PASS,vgr16,Checking for SignExtension
-lh1,lh,PASS,vg16,Checking for Address Validation
-lh2,lh,PASS,vgr16,Checking for Sign Extension
-slti1,slti,PASS,vgr16,Checking basic functionality
-slti2,slti,PASS,vgr16,Checking for signed functionality
-lwr1,lwr,PASS,vgr16,No message
-lwr2,lwr,PASS,vgr16,Reading from last byte of Data Address space
-sw1,sw,PASS,vgr16,Trying to output the character 'A'
-add1,add,PASS,vgr16,Basic ADD test
-add2,add,FAIL,vgr16,Checking Overflow
+1,jr,PASS,vgr16,A single JR instruction to Address 0x0
+2,addi,PASS,vgr16,Adding a constant to $2 followed be a jr insturction
+3,addi,PASS,vgr16,Adding 1024 to $2 in an infinite loop (Expect overflow)
+4,addi,PASS,vgr16,Adding 0x8000(-32768) from $2 in an infinite loop (Expect overflow)
+5,addiu,PASS,vgr16,Adding 0xFFFF to $2 followed be a jr
+6,andi,PASS,vgr16,No Message
+7,beq,PASS,vgr16,No Message
+8,beq,PASS,vgr16,No Message
+9,beq,PASS,vgr16,No Message
+10,beq,PASS,vgr16,No Message
+11,beq,PASS,vgr16,No Message
+12,beq,PASS,vgr16,No Message
+13,beq,PASS,vgr16,No Message
+14,bne,PASS,vgr16,No Message
+15,bne,PASS,vgr16,No Message
+16,bne,PASS,vgr16,No Message
+17,bne,PASS,vgr16,No Message
+18,bne,PASS,vgr16,No Message
+19,bne,PASS,vgr16,No Message
+20,bne,PASS,vgr16,No Message
+21,bgez,PASS,vgr16,No Message
+22,bgez,PASS,vgr16,No Message
+23,bgez,PASS,vgr16,No Message
+24,bgezal,PASS,vgr16,No Message
+25,bgezal,PASS,vgr16,No Message
+26,bgezal,PASS,vgr16,No Message
+27,bgtz,PASS,vgr16,No Message
+28,bgtz,PASS,vgr16,No Message
+29,blez,PASS,vgr16,No Message
+30,blez,PASS,vgr16,No Message
+31,bltz,PASS,vgr16,No Message
+32,bltz,PASS,vgr16,No Message
+33,bltz,PASS,vgr16,No Message
+34,bltzal,PASS,vgr16,No Message
+35,bltzal,PASS,vgr16,No Message
+36,lbu,PASS,vgr16,No Message
+37,lbu,PASS,vgr16,No Message
+38,lbu,PASS,vgr16,No Message
+39,lbu,PASS,vgr16,No Message
+40,lb,PASS,vgr16,No Message
+41,lb,PASS,vgr16,No Message
+42,lb,PASS,vgr16,No Message
+43,lb,PASS,vgr16,No Message
+44,lb,PASS,vgr16,No Message
+45,lhu,PASS,vgr16,No Message
+46,lhu,PASS,vgr16,No Message
+47,lhu,PASS,vgr16,No Message
+48,lhu,PASS,vgr16,No Message
+49,lh,PASS,vgr16,No Message
+50,lh,PASS,vgr16,No Message
+51,lh,PASS,vgr16,No Message
+52,lh,PASS,vgr16,No Message
+53,lh,PASS,vgr16,No Message
+54,sltiu,PASS,vgr16,No Message
+55,sltiu,PASS,vgr16,No Message
+56,sltiu,PASS,vgr16,No Message
+57,slti,PASS,vgr16,No Message
+58,slti,PASS,vgr16,No Message
+59,slti,PASS,vgr16,No Message
+60,lwr,PASS,vgr16,No message
+62,sw,PASS,vgr16,output the character 'A'
+63,add,PASS,vgr16,Basic ADD test
+64,add,PASS,gi316,Checking overflow
+65,addu,PASS,gi316,Checking that overflow is ignored
+66,and,PASS,gi316,AND $2 (0xFFFFFFFF) with 0xFFFF
+67,multu,PASS,gi316,-
+68,or,PASS,gi316,OR $2 (0xFFFFFFFF) with 0
+69,slt,PASS,gi316,see code
+70,sltu,PASS,gi316, see code
+71,sll,PASS,gi316,multiply 1 by 128
+72,srl,PASS,gi316,divide 128 by 128
+73,sub,PASS,gi316,subtract 1-1
+74,sub,PASS,gi316,subtract 0x7FFFFFFF-0xFFFFFFFF (Overflow)
+75,subu,PASS,gi316,subtract 0x7FFFFFFF-0xFFFFFFFF (Must NOT Overflow)
+76,div,PASS,gi316,result should be 1
+77,sra,PASS,gi316,divide -1/2^31 (Must remain -1 in $2)
+78,mult,PASS,gi316,multiply (-1)*(1)
+79,multu,PASS,gi316,multiply (-1)*(1)
+80,Hi,PASS,gi316,move a value from HI
+81,sllv,PASS,gi316,see code
+82,srav,PASS,gi316,see code
+83,srlv,PASS,gi316,see code
+84,j,PASS,vgr16,ADDI forllowed by JUMP
+85,stack,PASS,vgr16,C test that calculates 5! recursively
+86,lwsw,PASS,vgr16,Tests sw lw sb lb
+87,char,PASS,vgr16,Teast loading and storting a char
+88,stress,PASS,gi316,testing general
+89,stress,PASS,gi316,-
+90,calc,PASS,vgr16,No message
+91,sort,PASS,vgr16,Merge Sort
+92,stress,PASS,gi316,Testing Branches
+93,stress,PASS,gi316,Testing lb
+94,stress,PASS,gi316,Testing shift
+95,stress,PASS,gi316,No Message
+96,sort,PASS,vgr16,Sorting Char
+97,charOp,PASS,vgr16,No Message
+98,jalr,PASS,vgr16,No Message
+99,quiksrt,PASS,gi316,-
+100,fibonci,PASS,gi316,-
+101,multu,PASS,gi316,-
+102,lwl,PASS,vgr16,No Message
+103,stress,PASS,gi316,-
+104,add,PASS,gi316,-
+105,add,PASS,gi316,-
+106,add,PASS,gi316,-
+107,addu,PASS,gi316,-
+108,addu,PASS,gi316,-
+109,and,PASS,gi316,-
+110,and,PASS,gi316,-
+111,div,PASS,gi316,-
+112,div,PASS,gi316,-
+113,div,PASS,gi316,-
+114,div,PASS,gi316,-
+115,div,PASS,gi316,-
+116,div,PASS,gi316,-
+117,div,PASS,gi316,-
+118,div,PASS,gi316,-
+119,divu,PASS,gi316,-
+120,divu,PASS,gi316,-
+121,divu,PASS,gi316,-
+122,divu,PASS,gi316,-
+124,jr,PASS,gi316,-
+125,mult,PASS,gi316,-
+126,mult,PASS,gi316,-
+127,mult,PASS,gi316,-
+128,mult,PASS,gi316,-
+129,mult,PASS,gi316,-
+130,mult,PASS,gi316,-
+131,mult,PASS,gi316,-
+132,or,PASS,gi316,-
+133,or,PASS,gi316,-
+134,or,PASS,gi316,-
+135,or,PASS,gi316,-
+136,sll,PASS,gi316,-
+137,sll,PASS,gi316,-
+138,sll,PASS,gi316,-
+139,sllv,PASS,gi316,-
+140,sllv,PASS,gi316,-
+141,srlv,PASS,gi316,-
+142,slt,PASS,gi316,-
+143,slt,PASS,gi316,-
+144,slt,PASS,gi316,-
+145,sltu,PASS,gi316,-
+146,sltu,PASS,gi316,-
+147,sltu,PASS,gi316,-
+148,sltu,PASS,gi316,-
+149,sra,PASS,gi316,-
+150,sra,PASS,gi316,-
+151,srav,PASS,gi316,-
+152,srl,PASS,gi316,-
+153,srl,PASS,gi316,-
+154,srl,PASS,gi316,-
+155,sub,PASS,gi316,-
+156,sub,PASS,gi316,-
+157,sub,PASS,gi316,-
+158,sub,PASS,gi316,-
+159,subu,PASS,gi316,-
+160,subu,PASS,gi316,-
+161,lwl,PASS,vgr16,No Message
+162,lwl,PASS,vgr16,No Message
+163,jalr,PASS,vgr16,No Message
+164,sh,PASS,vgr16,No Message
+165,sh,PASS,vgr16,No Message
+166,sh,PASS,vgr16,No Message
+167,lwr,PASS,vgr16,No Message
+168,lwr,PASS,vgr16,No Message
+169,cpx-mul,PASS,ishitac,No Message

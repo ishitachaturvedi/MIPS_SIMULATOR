@@ -62,10 +62,10 @@ int main(int argc, char* argv[]){
 				v[i].setResult("FAIL");
 			}			
 		}
-		std::cout << v[i] << " Actual ExitCode: " << s << std::endl;
+		std::cout << v[i] << " Actual ExitCode: " << s << "\t FILE: " << v[i].getBin() << std::endl;
 	}
 
-	/*
+	
 	std::ofstream output("testbench/results.csv");
 
 	if(!output.is_open()){
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]){
 	}
 
 	output.close();
-	*/
+	
 
 	//std::string output = exec((simulator + " " + testBin).c_str());
 

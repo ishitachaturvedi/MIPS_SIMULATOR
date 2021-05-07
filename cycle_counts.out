@@ -1,0 +1,7 @@
+testbench/tests/bin/test0.mips.bin,6
+testbench/tests/bin/test1.mips.bin,7
+testbench/tests/bin/test2.mips.bin,7
+testbench/tests/bin/test5.mips.bin,8
+testbench/tests/bin/beq01.mips.bin,9
+testbench/tests/bin/beq02.mips.bin,9
+testbench/tests/bin/beq03.mips.bin,9

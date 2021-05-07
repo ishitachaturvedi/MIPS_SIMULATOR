@@ -24,7 +24,7 @@ void toVector(std::ifstream& input, std::vector<Test>& v);
 Test toTest(const std::string& line);
 
 //This functions is used to output the CSV file that will contain the results of the test
-//void toCSV(std::ofstream& ouput, const std::vector<Test>& v);
+void toCSV(std::ofstream& ouput, const std::vector<Test>& v);
 
 
 #endif

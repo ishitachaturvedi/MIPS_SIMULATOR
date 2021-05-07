@@ -128,8 +128,10 @@ int main(int argc, char* argv[]){
 
 			// if end of program has been reached, dump the pipeline diagram
 			if(pipeState.wbPC == ADDR_NULL){
-				std::cout << "Dumping Pipe Diagram" << endl;
-				dumpPipeDiagram(dstate);
+				//std::cout << "Dumping Pipe Diagram" << endl;
+				//dumpPipeDiagram(dstate);
+				ofstream result_out("cycle_counts.out", ios::app);
+				result_out << fileName << "," << CurCycle << endl;
 			}
 			
 			// check if the end of program has reached and exit the simulator

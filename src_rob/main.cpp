@@ -191,15 +191,15 @@ int main(int argc, char* argv[]){
 			{
 				mips_state.pc = tempNPC;
 			}
-
-			/*
+			
 			if(pipeStateALU.wbPC == ADDR_NULL){
-				std::cout << "Dumping Pipe Diagram" << endl;
-				dumpPipeDiagram(dstate);
+				//std::cout << "Dumping Pipe Diagram" << endl;
+				//dumpPipeDiagram(dstate);
+				ofstream result_out("cycle_counts.out", ios::app);
+				result_out << fileName << "," << CurCycle << endl;
 			}
-			*/
-			
-			
+
+
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 
 			if(!pipeStateALU.wb){
