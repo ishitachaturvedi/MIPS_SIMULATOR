@@ -25,51 +25,77 @@ int main(int argc, char* argv[]){
 			exit(1);
 		}
 
-		// clear contents of file
+		// clear contents of pipedump and pipediagram
 		std::ofstream ofs;
 		ofs.open("pipe_state.out", std::ofstream::out | std::ofstream::trunc);
 		ofs.close();
+		ofs.open("pipe_diagram.out", std::ofstream::out | std::ofstream::trunc);
+		ofs.close();
+		ofs.open("rob_state.out", std::ofstream::out | std::ofstream::trunc);
+		ofs.close();
 
 		string fileName(argv[1]);
+		// store pc of the next instruction to be issued
 		int32_t tempNPC = 0;
-		bool executed;				//this flag is turned on when an instruction of one of the 3 types has been executed
+		//this flag is turned on when an instruction of one of the 3 types has been executed
+		bool executed;				
+		// this data structure keeps note of the next pc and the state of the memory	
 		State mips_state;
-
+		// this data structure keeps note of the state of the ROB
 		ROBState robState;
+		// initialise the ROB
 		initROB(robState);
 
+		// datastructure to store the state of the pipeline diagram per cycle
 		DiagramState dstate;
+		// initialise the pipeline diagram
 		initDiagram(dstate);
 
+		// this datastructure stores the ALU pipeline state and moves it forward one step for each cycle
 		PipeState pipeStateALU;
 		pipeStateALU.pipe_type = ALU_PIPE;	
+		// this datastructure stores the MEM pipeline state and moves it forward one step for each cycle
 		PipeState pipeStateMEM;	
 		pipeStateMEM.pipe_type = MEM_PIPE;
+		// this datastructure stores the MULDIV pipeline state and moves it forward one step for each cycle
 		PipeState pipeStateMULDIV;	
 		pipeStateMULDIV.pipe_type = MULDIV_PIPE;
 
+		// this datastructure stores the state for what the pipeline will look like in the next cycle
 		PipeState_Next pipeState_NextALU;
 		PipeState_Next pipeState_NextMEM;
 		PipeState_Next pipeState_NextMULDIV;
 
+		// datastructure to store decoded instruction
 		Decode decode;
 
+		// store ALU instruction
 		uint32_t instrALU = NOP;
+		// store MEM instruction
 		uint32_t instrMEM = NOP;
+		// store MULDIV instruction
 		uint32_t instrMULDIV = NOP;
 	
-
+		//stall for 1 extra cycle for LD stalls which are resolved in mem stage
+		// IF and ID are stalled when stalling = 1
 		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage
 
-		mips_state.ram.resize(MEM_SIZE);	//This will allocate memory for the whole RAM
+		//This will allocate memory for the whole RAM
+		mips_state.ram.resize(MEM_SIZE);	
 
+		// is_load checks if instruction is a load instruction
 		bool is_load = false;
+		// is_load checks if instruction is a store instruction
 		bool is_store = false;
+		// is_load checks if instruction is a MULDIV instruction
 		bool is_mulDiv = false;
+		// is_load checks if instruction is a mflo or mfhi instruction
 		bool is_md_non_stall = false;
 
-		setUp(mips_state, fileName);		//Passes the instructions to the vector
+		// Passes the instructions to the vector
+		setUp(mips_state, fileName);		
 
+		// initilaise the ALU, MEM, MULDIV pipelines
 		initPipeline(pipeState_NextALU);
 		initPipeline(pipeState_NextMEM);
 		initPipeline(pipeState_NextMULDIV);
@@ -79,8 +105,10 @@ int main(int argc, char* argv[]){
 			mips_state.reg[0] = 0;		//register $0 must retain the value zero in every new clock cycle of the processor
 			executed = false;		//every new clock cycle the flag is turned off since no instruction has yet been executed
 
+			// Fetch the instruction to be executed
 			uint32_t instr = mips_state.ram[mips_state.pc];
 
+			// initialise ROB commit state per cycle
 			robState.cycle = CurCycle;
 			robState.commited = false;
 			robState.commit_instr = NOP;
@@ -88,7 +116,8 @@ int main(int argc, char* argv[]){
 			//Send Instruction for Decode
 			decode_inst(instr,decode);
 
-			// Execute if not stalling
+			// If the pipeline is not stalling at IF and ID stage because of load stalls, execute the fetched instruction
+			// IF, ID, EX, MEM, WB are done in one cycle, the values are propogated down an architectural pipeline 
 			if(stalling != 1)
 			{
 				tempNPC = mips_state.npc;
@@ -114,6 +143,14 @@ int main(int argc, char* argv[]){
 				}
 			}
 
+			// check if is_mulDiv, send down pipe3 and send noop down pipe 1 and 2
+
+			// if is_load or is_store, send down pipe2
+			// else send down pipe 1
+
+			// The instruction just executed is now sent down the pipeline. Even though it has executed it is shown to be in the "IF" stage to the user
+			// in the next cycle it will be in the ID stage, then EX and finally WB
+			// Move ALU, MEM and MULDIV one cycle forward
 			moveOneCycle(mips_state, pipeStateALU, pipeState_NextALU, executed, CurCycle, instrALU, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
 			moveOneCycle(mips_state, pipeStateMEM, pipeState_NextMEM, executed, CurCycle, instrMEM, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
 			moveOneCycle(mips_state, pipeStateMULDIV, pipeState_NextMULDIV, executed, CurCycle, instrMULDIV, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
@@ -174,12 +211,13 @@ int main(int argc, char* argv[]){
 
 			updatePipeDiagram(dstate, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 			
+			// if stalling was present in the last cycle, mark it as zero and check again if this cycle will need to be stalled
 			if(stalling == 1)
 			{
 				stalling = 0;
 			}
 
-			// compare in all three pipestates
+			// check if there needs to be a stall in the next cycle for a load RAW dependece
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
 			//dumpROBState(robState);
@@ -187,20 +225,13 @@ int main(int argc, char* argv[]){
 
 			CurCycle = CurCycle + 1;
 
-			
+			// update the present pc to the NPC only if there is no stall
 			if(stalling !=1)
 			{
 				mips_state.pc = tempNPC;
 			}
 
-			/*
-			if(pipeStateALU.wbPC == ADDR_NULL){
-				std::cout << "Dumping Pipe Diagram" << endl;
-				dumpPipeDiagram(dstate);
-			}
-			*/
-			
-			
+			// check if the end of program has reached and exit the simulator
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 
 			if(!pipeStateALU.wb){

@@ -31,6 +31,8 @@ int main(int argc, char* argv[]){
 		std::ofstream ofs;
 		ofs.open("pipe_state.out", std::ofstream::out | std::ofstream::trunc);
 		ofs.close();
+		ofs.open("rob_state.out", std::ofstream::out | std::ofstream::trunc);
+		ofs.close();
 
 		string fileName(argv[1]);
 		// store pc of the next instruction to be issued
@@ -149,7 +151,7 @@ int main(int argc, char* argv[]){
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
 			// update the pipeline dump
-			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV);	
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV);	
 
 			CurCycle = CurCycle + 1;
 

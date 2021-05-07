@@ -23,6 +23,8 @@ int main(int argc, char* argv[]){
 		std::ofstream ofs;
 		ofs.open("pipe_state.out", std::ofstream::out | std::ofstream::trunc);
 		ofs.close();
+		ofs.open("pipe_diagram.out", std::ofstream::out | std::ofstream::trunc);
+		ofs.close();
 
 		string fileName(argv[1]);
 		// store pc of the next instruction to be issued
@@ -129,7 +131,7 @@ int main(int argc, char* argv[]){
 			// if end of program has been reached, dump the pipeline diagram
 			if(pipeState.wbPC == ADDR_NULL){
 				std::cout << "Dumping Pipe Diagram" << endl;
-				dumpPipeDiagram(dstate);
+				//dumpPipeDiagram(dstate);
 			}
 			
 			// check if the end of program has reached and exit the simulator
