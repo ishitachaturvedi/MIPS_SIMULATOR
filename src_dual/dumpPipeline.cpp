@@ -3,7 +3,6 @@
 #include <vector>
 
 static void handleOpZeroInst(uint32_t instr, std::ostream & out_stream);
-static void printInstr(uint32_t curInst, std::ostream & pipeState);
 static void handleImmInst(uint32_t instr, std::ostream & out_stream);
 static string getImmString(uint8_t opcode);
 static uint8_t getOpcode(uint32_t instr);
@@ -445,7 +444,7 @@ void MoveOneCycleIFIDPause(PipeStateIFID &pipeStateIFID, State &mips_state)
     pipeStateIFID.if_isvalB = 0;
 }
 
-void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t rob_tail, uint32_t diagram_slot, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB, int& stalling)
+void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t &rob_tail, uint32_t diagram_slot, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB, int& stalling)
 {
 
     //pass stall stage
@@ -463,6 +462,28 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.exInstrB = pipeStateIFID.idInstrB;
         pipeStateIFID.idInstrB = pipeStateIFID.ifInstrB;
         pipeStateIFID.ifInstrB = instrB;
+
+        //pass ROB tail
+        pipeStateIFID.rob_fill_slot_exA = rob_tail;
+
+        uint32_t rob_tailB;
+        if(rob_tail < ROB_SIZE-1)
+            rob_tail = rob_tail + 1;
+        else
+            rob_tail = 0;
+
+        pipeStateIFID.rob_fill_slot_exB = rob_tail;
+
+        pipeStateIFID.ex1A = true;
+        pipeStateIFID.ex1B = true;
+
+        pipeStateIFID.diagram_slot_exA = diagram_slot;
+        diagram_slot = diagram_slot + 1;
+        if(diagram_slot < DIAGRAM_SIZE-1)
+            pipeStateIFID.diagram_slot_exB = diagram_slot;
+        else
+        dstate.is_full = true;
+
     }
 
     else if ( pipeStateIFID.stall_state_EX == 2)
@@ -473,6 +494,13 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         
         pipeStateIFID.exInstrB = NOP;
         pipeStateIFID.ifInstrB = instrB;
+
+        pipeStateIFID.rob_fill_slot_exA = rob_tail;
+
+        pipeStateIFID.ex1A = true;
+        pipeStateIFID.ex1B = false;
+
+        pipeStateIFID.diagram_slot_exA = diagram_slot;
     }
 
     else if ( pipeStateIFID.stall_state_EX == 1)
@@ -484,6 +512,13 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.exInstrB = pipeStateIFID.idInstrB;
         pipeStateIFID.idInstrB = pipeStateIFID.ifInstrB;
         pipeStateIFID.ifInstrB = instrB;
+
+        pipeStateIFID.rob_fill_slot_exB = rob_tail;
+
+        pipeStateIFID.ex1A = false;
+        pipeStateIFID.ex1B = true;
+
+        pipeStateIFID.diagram_slot_exB = diagram_slot;
     }
 
     {
@@ -498,25 +533,13 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
 
 
     {
-        //pass ROB tail
-        pipeStateIFID.rob_fill_slot_exA = rob_tail;
-
-        uint32_t rob_tailB;
-        if(rob_tail < ROB_SIZE-1)
-            rob_tailB = rob_tail + 1;
-        else
-            rob_tailB = 0;
-
-        pipeStateIFID.rob_fill_slot_exB = rob_tailB;
-
-
         //pass Pipe Diagram slot
-        pipeStateIFID.diagram_slot_exA = diagram_slot;
+        // pipeStateIFID.diagram_slot_exA = diagram_slot;
 
-        if(diagram_slot < DIAGRAM_SIZE-1)
-            pipeStateIFID.diagram_slot_exB = diagram_slot + 1;
-        else
-            dstate.is_full = true;
+        // if(diagram_slot < DIAGRAM_SIZE-1)
+        //     pipeStateIFID.diagram_slot_exB = diagram_slot + 1;
+        // else
+        //     dstate.is_full = true;
         
     }
 
@@ -566,22 +589,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.id_isstoreB = pipeStateIFID.if_isstoreB;
     }
 
-    {
-        pipeStateIFID.ex1A = pipeStateIFID.IDA;
-        pipeStateIFID.IDA = pipeStateIFID.IFA;
-
-        pipeStateIFID.ex1B = pipeStateIFID.IDB;
-        pipeStateIFID.IDB = pipeStateIFID.IFB;
-    }
-
-    if ( pipeStateIFID.stall_state_EX == 2)
-    {
-        pipeStateIFID.ex1B = false;
-    }
-    if ( pipeStateIFID.stall_state_EX == 1)
-    {
-        pipeStateIFID.ex1A = false;
-    }
 
 
     {
@@ -1425,7 +1432,7 @@ static void handleOpZeroInst(uint32_t instr, ostream & out_stream)
     out_stream << left << setw(25) << sb.str();
 }
 
-static void printInstr(uint32_t curInst, ostream & pipeState)
+void printInstr(uint32_t curInst, ostream & pipeState)
 {
     if(curInst == 0xfeedfeed)
     {

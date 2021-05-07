@@ -285,14 +285,11 @@ int main(int argc, char* argv[]){
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling, pipeStateIFID);
 
+			//dumpROBState(robState);
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID);	
+
 			CurCycle = CurCycle + 1;
 
-			/*
-			if(pipeStateALU.wbPC == ADDR_NULL){
-				std::cout << "Cycle Count: " << CurCycle << endl;
-			}
-			*/
-			
 			if(pipeStateALU.wbPC == ADDR_NULL){
 				std::cout << "Dumping Pipe Diagram" << endl;
 				dumpPipeDiagram(dstate);
