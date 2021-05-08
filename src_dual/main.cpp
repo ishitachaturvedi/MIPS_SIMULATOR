@@ -126,8 +126,10 @@ int main(int argc, char* argv[]){
 			executedB = false;		//every new clock cycle the flag is turned off since no instruction has yet been executed
 
 			robState.cycle = CurCycle;
-			robState.commited = false;
-			robState.commit_instr = NOP;
+			robState.commitedA = false;
+			robState.commit_instrA = NOP;
+			robState.commitedB = false;
+			robState.commit_instrB = NOP;
 
 			// Execute if not stalling
 			if(stalling != 1 && pipeStateIFID.stall_state_IF != 1 && !is_exited && !pause_for_jump_branch)
@@ -190,8 +192,8 @@ int main(int argc, char* argv[]){
 			// ROB Commit
 			if ((!robState.pending[robState.head]) && (robState.valid[robState.head])) {
 				robState.valid[robState.head] = false;
-				robState.commited = true;
-				robState.commit_instr = robState.instr[robState.head];
+				robState.commitedA = true;
+				robState.commit_instrA = robState.instr[robState.head];
 				if (robState.head != 15) {
 					robState.head += 1;
 				} else {
@@ -201,8 +203,8 @@ int main(int argc, char* argv[]){
 			//double commit
 			if ((!robState.pending[robState.head]) && (robState.valid[robState.head])) {
 				robState.valid[robState.head] = false;
-				robState.commited = true;
-				robState.commit_instr = robState.instr[robState.head];
+				robState.commitedB = true;
+				robState.commit_instrB = robState.instr[robState.head];
 				if (robState.head != 15) {
 					robState.head += 1;
 				} else {

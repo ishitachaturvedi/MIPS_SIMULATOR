@@ -1046,8 +1046,10 @@ void initROB(ROBState &robState)
     robState.cycle = 0;
     robState.head = 0;
     robState.tail = 0;
-    robState.commited = false;
-    robState.commit_instr = NOP;
+    robState.commitedA = false;
+    robState.commitedB = false;
+    robState.commit_instrA = NOP;
+    robState.commit_instrB = NOP;
     for (int i = 0; i < ROB_SIZE; i += 1) {
         robState.instr[i] = NOP;
         robState.valid[i] = false;
@@ -1548,10 +1550,17 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
         pipe_out << "|" << endl;
         pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
            pipe_out << "|";
-        pipe_out << " \t \t COMMIT \t \t  | " << endl;
+        pipe_out << " \t \t COMMITA\t \t  | " ;
+        pipe_out << " \t \t COMMITB\t \t  | " << endl;
         pipe_out << "|";
-        if (robState.commited) {
-            printInstr(robState.commit_instr, pipe_out);
+        if (robState.commitedA) {
+            printInstr(robState.commit_instrA, pipe_out);
+        } else {
+            pipe_out << "\t \t   nop\t\t\t";
+        }
+        pipe_out << "|";
+        if (robState.commitedB) {
+            printInstr(robState.commit_instrA, pipe_out);
         } else {
             pipe_out << "\t \t   nop\t\t\t";
         }

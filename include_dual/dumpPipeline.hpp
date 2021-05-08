@@ -279,8 +279,10 @@ struct ROBState {
     uint32_t preg[ROB_SIZE];
     uint32_t head;
     uint32_t tail;
-    bool commited;
-    uint32_t commit_instr;
+    bool commitedA;
+    bool commitedB;
+    uint32_t commit_instrA;
+    uint32_t commit_instrB;
 };
 
 struct Instr {
