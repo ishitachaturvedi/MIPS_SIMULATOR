@@ -282,8 +282,8 @@ int main(int argc, char* argv[]){
 				stalling = 0;
 			}
 
-			dumpROBState(robState);
-			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID);
+			//dumpROBState(robState);
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID);
 
 
 			// compare in all three pipestates
@@ -304,8 +304,8 @@ int main(int argc, char* argv[]){
 			*/
 			
 			if(pipeStateALU.wbPC == ADDR_NULL){
-				std::cout << "Dumping Pipe Diagram" << endl;
-				dumpPipeDiagram(dstate);
+				//std::cout << "Dumping Pipe Diagram" << endl;
+				//dumpPipeDiagram(dstate);
 			}
 			
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
