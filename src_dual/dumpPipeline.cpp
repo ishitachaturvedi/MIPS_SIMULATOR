@@ -457,7 +457,7 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
     pipeStateIFID.stall_state_IF = stall_state;
 
     //pass instructions
-    if ( pipeStateIFID.stall_state_EX == 0)
+    if ( pipeStateIFID.stall_state_EX == 0 && stalling != 1)
     {
         pipeStateIFID.exInstrA = pipeStateIFID.idInstrA;
         pipeStateIFID.idInstrA = pipeStateIFID.ifInstrA;
@@ -504,7 +504,7 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
 
     }
 
-    else if ( pipeStateIFID.stall_state_EX == 2)
+    else if ( pipeStateIFID.stall_state_EX == 2 && stalling != 1)
     {
         pipeStateIFID.exInstrA = pipeStateIFID.idInstrA;
         pipeStateIFID.ifInstrA = instrA;
@@ -532,9 +532,10 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
 
         pipeStateIFID.ex_isvalA = true;
         pipeStateIFID.ex_isvalB = false;
+
     }
 
-    else if ( pipeStateIFID.stall_state_EX == 1)
+    else if ( pipeStateIFID.stall_state_EX == 1 && stalling != 1)
     {
         pipeStateIFID.exInstrA = NOP;
         pipeStateIFID.idInstrA = pipeStateIFID.ifInstrA;
@@ -585,46 +586,64 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
     pipeStateIFID.idregB = pipeStateIFID.ifregB;
     pipeStateIFID.ifregB = regB;
 
-    //pass hazard from IF to ID
+    //pass hazard from ID to EX
+    if(stalling != 1)
     {
         pipeStateIFID.is_hazard_EX = pipeStateIFID.is_hazard_ID;
-        pipeStateIFID.is_hazard_ID = pipeStateIFID.is_hazard_IF;
 
         pipeStateIFID.is_jumpA_EX = pipeStateIFID.is_jumpA_ID;
-        pipeStateIFID.is_jumpA_ID = pipeStateIFID.is_jumpA_IF;
-        
+
         pipeStateIFID.is_branchA_EX = pipeStateIFID.is_branchA_ID;
-        pipeStateIFID.is_branchA_ID = pipeStateIFID.is_branchA_IF;
 
         pipeStateIFID.is_jumpB_EX = pipeStateIFID.is_jumpB_ID;
-        pipeStateIFID.is_jumpB_ID = pipeStateIFID.is_jumpB_IF;
 
         pipeStateIFID.is_branchB_EX = pipeStateIFID.is_branchB_ID;
+
+        pipeStateIFID.ex_isMulDivA = pipeStateIFID.id_isMulDivA;
+
+        pipeStateIFID.ex_isMulDivB = pipeStateIFID.id_isMulDivB;
+
+        pipeStateIFID.ex_isloadA = pipeStateIFID.id_isloadA;
+
+        pipeStateIFID.ex_isloadB = pipeStateIFID.id_isloadB;
+
+        pipeStateIFID.ex_isstoreA = pipeStateIFID.id_isstoreA;
+
+        pipeStateIFID.ex_isstoreB = pipeStateIFID.id_isstoreB;
+    }
+
+    //pass hazard from IF to ID
+    if(pipeStateIFID.stall_state_ID != 1 && stalling != 1)
+    {
+        pipeStateIFID.is_hazard_ID = pipeStateIFID.is_hazard_IF;
+
+        pipeStateIFID.is_jumpA_ID = pipeStateIFID.is_jumpA_IF;
+        
+        pipeStateIFID.is_branchA_ID = pipeStateIFID.is_branchA_IF;
+
+        pipeStateIFID.is_jumpB_ID = pipeStateIFID.is_jumpB_IF;
+
         pipeStateIFID.is_branchB_ID = pipeStateIFID.is_branchB_IF;
 
         //Pass MULDIV, LOAD/STORE ETC
-        pipeStateIFID.ex_isMulDivA = pipeStateIFID.id_isMulDivA;
         pipeStateIFID.id_isMulDivA = pipeStateIFID.if_isMulDivA;
 
-        pipeStateIFID.ex_isMulDivB = pipeStateIFID.id_isMulDivB;
         pipeStateIFID.id_isMulDivB = pipeStateIFID.if_isMulDivB;
 
-        pipeStateIFID.ex_isloadA = pipeStateIFID.id_isloadA;
         pipeStateIFID.id_isloadA = pipeStateIFID.if_isloadA;
 
-        pipeStateIFID.ex_isloadB = pipeStateIFID.id_isloadB;
         pipeStateIFID.id_isloadB = pipeStateIFID.if_isloadB;
 
-        pipeStateIFID.ex_isstoreA = pipeStateIFID.id_isstoreA;
         pipeStateIFID.id_isstoreA = pipeStateIFID.if_isstoreA;
 
-        pipeStateIFID.ex_isstoreB = pipeStateIFID.id_isstoreB;
         pipeStateIFID.id_isstoreB = pipeStateIFID.if_isstoreB;
+    
     }
 
-
-    //change if only when not stalling front end
+    //if(pipeStateIFID.stall_state_IF != 2)
     {
+        //change if only when not stalling front end
+    
         pipeStateIFID.is_hazard_IF = hazard;
         pipeStateIFID.is_jumpA_IF = is_jumpA;
         pipeStateIFID.is_branchA_IF = is_branchA;
@@ -639,6 +658,12 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.IFA = executedA;
         pipeStateIFID.IFB = executedB;
     }
+
+    // if (stalling == 1)
+    // {
+    //     pipeStateIFID.exInstrA = NOP;
+    //     pipeStateIFID.exInstrB = NOP;
+    // }
 
 }
 
@@ -771,8 +796,6 @@ void moveOneCycle(State &mips_state, PipeStateIFID &pipeStateIFID, PipeState &pi
     is_mulDivB = is_mulDivB || is_md_non_stallB;
 
     int stall_state = 0;
-
-    //cout << "INSIDE "<<unsigned(instrA) <<" "<< unsigned(instrB) <<"\n";
 
     if(pipeStateIFID.stall_state_IF != 0)
     {
@@ -1524,7 +1547,7 @@ void printInstr(uint32_t curInst, ostream & pipeState)
     }
 }
 
-void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState, PipeStateIFID & pipeStateIFID)
+void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState, PipeStateIFID & pipeStateIFID, int stalling)
 {
 
     ofstream pipe_out("pipe_state.out", ios::app);
@@ -1533,7 +1556,7 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
     {
 
         pipe_out << "####################################################" << endl;
-        pipe_out << "Cycle: " << pipeStateIFID.cycle << " IF : "<< pipeStateIFID.stall_state_IF <<" ID : " << pipeStateIFID.stall_state_ID <<" EX : " << pipeStateIFID.stall_state_EX <<" " <<endl;
+        pipe_out << "Cycle: " << pipeStateIFID.cycle << " IF : "<< pipeStateIFID.stall_state_IF <<" ID : " << pipeStateIFID.stall_state_ID <<" EX : " << pipeStateIFID.stall_state_EX <<endl;
         pipe_out << "####################################################" << endl;
         pipe_out << "|";
         pipe_out << "\t  IF \t \t   |\t  ID \t \t   | " << endl;
