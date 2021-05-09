@@ -342,7 +342,6 @@ void moveOneCycleALU(PipeState &pipeState, PipeState_Next &pipeState_Next, uint3
     pipeState_Next.rob_fill_slot_wb = rob_tail;
 
     // Pipe Diagram slots
-    
     pipeState.diagram_slot_ex1 = diagram_slot;
     pipeState.diagram_slot_wb = pipeState_Next.diagram_slot_wb;
 
@@ -483,20 +482,8 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
 
         // assign diagram slots
         pipeStateIFID.diagram_slot_exA = pipeStateIFID.diagram_slot_idA;
-        pipeStateIFID.diagram_slot_idA = pipeStateIFID.diagram_slot_ifA;
-
-        if(diagram_slot < DIAGRAM_SIZE-1)
-            pipeStateIFID.diagram_slot_ifA = diagram_slot;
-        else
-            dstate.is_full = true;
 
         pipeStateIFID.diagram_slot_exB = pipeStateIFID.diagram_slot_idB;
-        pipeStateIFID.diagram_slot_idB = pipeStateIFID.diagram_slot_ifB;
-        diagram_slot += 1;
-        if(diagram_slot < DIAGRAM_SIZE-1)
-            pipeStateIFID.diagram_slot_ifB = diagram_slot;
-        else
-            dstate.is_full = true;
         
         
         pipeStateIFID.ex_isvalA = true;
@@ -519,16 +506,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.ex1B = false;
 
         pipeStateIFID.diagram_slot_exA = pipeStateIFID.diagram_slot_idA;
-        pipeStateIFID.diagram_slot_idA = pipeStateIFID.diagram_slot_ifA;
-
-        if(diagram_slot < DIAGRAM_SIZE-1)
-            pipeStateIFID.diagram_slot_ifA = diagram_slot;
-        else
-            dstate.is_full = true;
-
-        pipeStateIFID.diagram_slot_exB = pipeStateIFID.diagram_slot_idB;
-        pipeStateIFID.diagram_slot_idB = pipeStateIFID.diagram_slot_ifB;
-        pipeStateIFID.diagram_slot_ifB = DIAGRAM_CYCLES + 1;
 
         pipeStateIFID.ex_isvalA = true;
         pipeStateIFID.ex_isvalB = false;
@@ -551,31 +528,20 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.ex1B = true;
 
         // assign diagram slots
-        pipeStateIFID.diagram_slot_exA = pipeStateIFID.diagram_slot_idA;
-        pipeStateIFID.diagram_slot_idA = pipeStateIFID.diagram_slot_ifA;
-        pipeStateIFID.diagram_slot_ifA = DIAGRAM_CYCLES + 1;
-
         pipeStateIFID.diagram_slot_exB = pipeStateIFID.diagram_slot_idB;
-        pipeStateIFID.diagram_slot_idB = pipeStateIFID.diagram_slot_ifB;
-        if(diagram_slot < DIAGRAM_SIZE-1)
-            pipeStateIFID.diagram_slot_ifB = diagram_slot;
-        else
-            dstate.is_full = true;
             
 
         pipeStateIFID.ex_isvalA = false;
         pipeStateIFID.ex_isvalB = true;
     }
 
-    {
-        pipeStateIFID.exPCA = pipeStateIFID.idPCA;
-        pipeStateIFID.idPCA = pipeStateIFID.ifPCA;
-        pipeStateIFID.ifPCA = pc_A;
+    pipeStateIFID.exPCA = pipeStateIFID.idPCA;
+    pipeStateIFID.idPCA = pipeStateIFID.ifPCA;
+    pipeStateIFID.ifPCA = pc_A;
 
-        pipeStateIFID.exPCB = pipeStateIFID.idPCB;
-        pipeStateIFID.idPCB = pipeStateIFID.ifPCB;
-        pipeStateIFID.ifPCB = pc_B;
-    }
+    pipeStateIFID.exPCB = pipeStateIFID.idPCB;
+    pipeStateIFID.idPCB = pipeStateIFID.ifPCB;
+    pipeStateIFID.ifPCB = pc_B;
 
     // Pass register states
     pipeStateIFID.exregA = pipeStateIFID.idregA;
@@ -625,6 +591,10 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
 
         pipeStateIFID.is_branchB_ID = pipeStateIFID.is_branchB_IF;
 
+        pipeStateIFID.diagram_slot_idA = pipeStateIFID.diagram_slot_ifA;
+
+        pipeStateIFID.diagram_slot_idB = pipeStateIFID.diagram_slot_ifB;
+
         //Pass MULDIV, LOAD/STORE ETC
         pipeStateIFID.id_isMulDivA = pipeStateIFID.if_isMulDivA;
 
@@ -638,6 +608,7 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
 
         pipeStateIFID.id_isstoreB = pipeStateIFID.if_isstoreB;
     
+        
     }
 
     //if(pipeStateIFID.stall_state_IF != 2)
@@ -657,6 +628,19 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.if_isstoreB = is_storeB;
         pipeStateIFID.IFA = executedA;
         pipeStateIFID.IFB = executedB;
+
+        if (diagram_slot < DIAGRAM_SIZE-1)
+        {
+            pipeStateIFID.diagram_slot_ifA = diagram_slot;
+            diagram_slot += 1;
+        }
+        else
+            dstate.is_full = true; 
+        
+        if (diagram_slot < DIAGRAM_SIZE-1)
+            pipeStateIFID.diagram_slot_ifB = diagram_slot;
+        else
+            dstate.is_full = true;        
     }
 
     // if (stalling == 1)
@@ -678,7 +662,7 @@ void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next)
 
     pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex1;
 
-    // ROB fill slots
+    // Pipe Diagram slots
     pipeState.diagram_slot_wb = pipeState_Next.diagram_slot_wb;
 
     pipeState_Next.diagram_slot_wb = pipeState_Next.diagram_slot_ex1;
@@ -705,7 +689,7 @@ void moveStalledMEM(PipeState &pipeState, PipeState_Next &pipeState_Next)
     pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex2;
     pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
 
-    // ROB fill slots
+    // Pipe Diagram slots
     pipeState.diagram_slot_ex2 = pipeState_Next.diagram_slot_ex2;
     pipeState.diagram_slot_wb = pipeState_Next.diagram_slot_wb;
 
@@ -743,6 +727,16 @@ void moveStalledMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next)
     pipeState_Next.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex2;
     pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
 
+    // Pipe Diagram slots
+    pipeState.diagram_slot_ex2 = pipeState_Next.diagram_slot_ex2;
+    pipeState.diagram_slot_ex3 = pipeState_Next.diagram_slot_ex3;
+    pipeState.diagram_slot_ex4 = pipeState_Next.diagram_slot_ex4;
+    pipeState.diagram_slot_wb = pipeState_Next.diagram_slot_wb;
+
+    pipeState_Next.diagram_slot_wb = pipeState_Next.diagram_slot_ex4;
+    pipeState_Next.diagram_slot_ex4 = pipeState_Next.diagram_slot_ex3;
+    pipeState_Next.diagram_slot_ex3 = pipeState_Next.diagram_slot_ex2;
+    pipeState_Next.diagram_slot_ex2 = pipeState_Next.diagram_slot_ex1;
 
     // iNSTRUCTION Valid
     pipeState.ex2_isval = pipeState_Next.ex2_isval;

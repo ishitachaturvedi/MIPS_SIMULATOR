@@ -482,7 +482,7 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         if(diagram_slot < DIAGRAM_SIZE-1)
             pipeStateIFID.diagram_slot_exB = diagram_slot;
         else
-        dstate.is_full = true;
+            dstate.is_full = true;
 
     }
 
