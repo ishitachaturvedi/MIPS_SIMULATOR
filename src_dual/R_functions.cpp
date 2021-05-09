@@ -4,14 +4,11 @@ using namespace std;
 
 void r_type(State& mips_state, bool& executed, Decode& decode, bool &is_mulDiv, bool &is_jump, bool &is_branch, bool&is_R, bool &is_md_non_stall){
 
-	// uint32_t instr = mips_state.ram[mips_state.pc];
-	// uint32_t opcode = (mips_state.ram[mips_state.pc] >> 26) & 0x0000003F;
-	// uint32_t funct_field = instr & 0x0000003F;
-	// uint32_t shamt_field = (instr & 0x000007C0) >> 6;
-	// uint32_t rd ;
-	// uint32_t rt = (instr & 0x001F0000) >> 16; 
-	// uint32_t rs = (instr & 0x03E00000) >> 21; 
 	is_R = false;
+	is_jump = false;
+	is_mulDiv = false;
+	is_md_non_stall = false;	
+	is_branch = false; 
 	if(!executed && decode.opcode_R == 0x00000000){
 		is_jump = false;
 		is_mulDiv = false;
