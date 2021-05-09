@@ -220,8 +220,8 @@ int main(int argc, char* argv[]){
 			// check if there needs to be a stall in the next cycle for a load RAW dependece
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
-			//dumpROBState(robState);
-			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
+			dumpROBState(robState);
+			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
 
 			CurCycle = CurCycle + 1;
 

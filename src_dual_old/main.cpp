@@ -33,8 +33,9 @@ int main(int argc, char* argv[]){
 		std::ofstream ofs1;
 		ofs1.open("rob_state.out", std::ofstream::out | std::ofstream::trunc);
 		ofs1.close();
-		ofs1.open("pipe_diagram.out", std::ofstream::out | std::ofstream::trunc);
-		ofs1.close();
+		//std::ofstream ofs2;
+		//ofs2.open("pipe_test.out", std::ofstream::out | std::ofstream::trunc);
+		//ofs2.close();
 
 		string fileName(argv[1]);
 		int32_t tempNPC = 0;
@@ -281,17 +282,30 @@ int main(int argc, char* argv[]){
 				stalling = 0;
 			}
 
+			//dumpROBState(robState);
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID);
+
+
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling, pipeStateIFID);
 
-			dumpROBState(robState);
-			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID);	
+			//dumpROBState(robState);
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID);	
 
 			CurCycle = CurCycle + 1;
 
+			/*
 			if(pipeStateALU.wbPC == ADDR_NULL){
-				std::cout << "Dumping Pipe Diagram" << endl;
-				dumpPipeDiagram(dstate);
+				//std::cout << "Dumping Pipe Diagram" << endl;
+				//dumpPipeDiagram(dstate);
+				ofstream result_out("cycle_counts.out", ios::app);
+				result_out << fileName << "," << CurCycle << endl;
+			}
+			*/
+			
+			if(pipeStateALU.wbPC == ADDR_NULL){
+				//std::cout << "Dumping Pipe Diagram" << endl;
+				//dumpPipeDiagram(dstate);
 			}
 			
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
