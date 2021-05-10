@@ -1486,10 +1486,6 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
         pipe_out << "|";
         printInstr(stateMEM.ex1Instr, pipe_out);
         pipe_out << "|";
-        // printInstr(stateMEM.ex2Instr, pipe_out);
-        // pipe_out << "|";
-        // printInstr(stateMEM.ex3Instr, pipe_out);
-        // pipe_out << "|";
         printInstr(stateMEM.wbInstr, pipe_out);
         pipe_out << "|" << endl;
         pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;
