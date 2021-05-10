@@ -123,8 +123,9 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
     decode_inst(pipeStateMULDIV.ex4Instr, ex4MD);
 
     // if ex1 are load inst which is being waited on, we stall
-    if(
+    if (
         ((id.rs == ex1MEM.rt || id.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr))
+        || ((id.rs == ex2MEM.rt || id.rd == ex2MEM.rt) && ex2MEM.rt != 0x0 && pipeStateMEM.ex2_isload && !(pipeStateMEM.ex2Instr == pipeStateMEM.ex3Instr))
     )
     {
         stalling = 1;
@@ -234,9 +235,11 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
             pipeState.idInstr = pipeState_Next.idInstr;
             pipeState.ex1Instr = pipeState_Next.ex1Instr;
             pipeState.ex2Instr = pipeState_Next.ex2Instr;
+            pipeState.ex3Instr = pipeState_Next.ex3Instr;
             pipeState.wbInstr = pipeState_Next.wbInstr;
 
-            pipeState_Next.wbInstr = pipeState_Next.ex2Instr;
+            pipeState_Next.wbInstr = pipeState_Next.ex3Instr;
+            pipeState_Next.ex3Instr = pipeState_Next.ex2Instr;
             pipeState_Next.ex2Instr = pipeState_Next.ex1Instr;
             pipeState_Next.ex1Instr = pipeState_Next.idInstr;
             pipeState_Next.idInstr = pipeState.ifInstr;
@@ -246,9 +249,11 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
             pipeState.idPC = pipeState_Next.idPC;
             pipeState.ex1PC = pipeState_Next.ex1PC;
             pipeState.ex2PC = pipeState_Next.ex2PC;
+            pipeState.ex3PC = pipeState_Next.ex3PC;
             pipeState.wbPC = pipeState_Next.wbPC;
             
-            pipeState_Next.wbPC = pipeState_Next.ex2PC;
+            pipeState_Next.wbPC = pipeState_Next.ex3PC;
+            pipeState_Next.ex3PC = pipeState_Next.ex2PC;
             pipeState_Next.ex2PC = pipeState_Next.ex1PC;
             pipeState_Next.ex1PC = pipeState_Next.idPC;
             pipeState_Next.idPC = pipeState.ifPC;
@@ -258,22 +263,25 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
             pipeState.idreg = pipeState_Next.idreg;
             pipeState.ex1reg = pipeState_Next.ex1reg;
             pipeState.ex2reg = pipeState_Next.ex2reg;
+            pipeState.ex3reg = pipeState_Next.ex3reg;
             pipeState.wbreg = pipeState_Next.wbreg;
             
-            pipeState_Next.wbreg = pipeState_Next.ex2reg;
+            pipeState_Next.wbreg = pipeState_Next.ex3reg;
+            pipeState_Next.ex3reg = pipeState_Next.ex2reg;
             pipeState_Next.ex2reg = pipeState_Next.ex1reg;
             pipeState_Next.ex1reg = pipeState_Next.idreg;
             pipeState_Next.idreg = pipeState.ifreg;
 
             //execute setting
-
             pipeState.IF = executed;
             pipeState.id = pipeState_Next.id;
             pipeState.ex1 = pipeState_Next.ex1;
             pipeState.ex2 = pipeState_Next.ex2;
+            pipeState.ex3 = pipeState_Next.ex3;
             pipeState.wb = pipeState_Next.wb;
 
-            pipeState_Next.wb = pipeState_Next.ex2;
+            pipeState_Next.wb = pipeState_Next.ex3;
+            pipeState_Next.ex3 = pipeState_Next.ex2;
             pipeState_Next.ex2 = pipeState_Next.ex1;
             pipeState_Next.ex1 = pipeState_Next.id;
             pipeState_Next.id = pipeState.IF;
@@ -283,7 +291,9 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
             pipeState.id_isload = pipeState_Next.id_isload;
             pipeState.ex1_isload = pipeState_Next.ex1_isload;
             pipeState.ex2_isload = pipeState_Next.ex2_isload;
+            pipeState.ex3_isload = pipeState_Next.ex3_isload;
             
+            pipeState_Next.ex3_isload = pipeState_Next.ex2_isload;
             pipeState_Next.ex2_isload = pipeState_Next.ex1_isload;
             pipeState_Next.ex1_isload = pipeState_Next.id_isload;
             pipeState_Next.id_isload = pipeState.if_isload;
@@ -293,9 +303,11 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
             pipeState.rob_fill_slot_id = pipeState_Next.rob_fill_slot_id;
             pipeState.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_ex1;
             pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
+            pipeState.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex3;
             pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
 
-            pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex2;
+            pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex3;
+            pipeState_Next.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex2;
             pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
             pipeState_Next.rob_fill_slot_ex1 = pipeState_Next.rob_fill_slot_id;
             pipeState_Next.rob_fill_slot_id = pipeState.rob_fill_slot_if;
@@ -305,9 +317,11 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
             pipeState.id_isval = pipeState_Next.id_isval;
             pipeState.ex1_isval = pipeState_Next.ex1_isval;
             pipeState.ex2_isval = pipeState_Next.ex2_isval;
+            pipeState.ex3_isval = pipeState_Next.ex3_isval;
             pipeState.wb_isval = pipeState_Next.wb_isval;
 
-            pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
+            pipeState_Next.wb_isval = pipeState_Next.ex3_isval;
+            pipeState_Next.ex3_isval = pipeState_Next.ex2_isval;
             pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
             pipeState_Next.ex1_isval = pipeState_Next.id_isval;
             pipeState_Next.id_isval = pipeState.if_isval;
@@ -317,9 +331,11 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
             pipeState.diagram_slot_id = pipeState_Next.diagram_slot_id;
             pipeState.diagram_slot_ex1 = pipeState_Next.diagram_slot_ex1;
             pipeState.diagram_slot_ex2 = pipeState_Next.diagram_slot_ex2;
+            pipeState.diagram_slot_ex3 = pipeState_Next.diagram_slot_ex3;
             pipeState.diagram_slot_wb = pipeState_Next.diagram_slot_wb;
 
-            pipeState_Next.diagram_slot_wb = pipeState_Next.diagram_slot_ex2;
+            pipeState_Next.diagram_slot_wb = pipeState_Next.diagram_slot_ex3;
+            pipeState_Next.diagram_slot_ex3 = pipeState_Next.diagram_slot_ex2;
             pipeState_Next.diagram_slot_ex2 = pipeState_Next.diagram_slot_ex1;
             pipeState_Next.diagram_slot_ex1 = pipeState_Next.diagram_slot_id;
             pipeState_Next.diagram_slot_id = pipeState.diagram_slot_if;
@@ -491,31 +507,46 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
         } else if (pipeState.pipe_type == MEM_PIPE) {
 
             pipeState.cycle = CurCycle;
-            pipeState.wbInstr = pipeState.ex2Instr;
+            pipeState.wbInstr = pipeState.ex3Instr;
+            pipeState.ex3Instr = pipeState.ex2Instr;
             pipeState.ex2Instr = pipeState.ex1Instr;
 
-            pipeState_Next.wbInstr =  pipeState.ex2Instr;
+            pipeState_Next.wbInstr =  pipeState.ex3Instr;
+            pipeState_Next.ex3Instr = pipeState.ex2Instr;
+
+            //is_load
+            pipeState.ex2_isload = pipeState_Next.ex2_isload;
+            pipeState.ex3_isload = pipeState_Next.ex3_isload;
+            
+            pipeState_Next.ex3_isload = pipeState_Next.ex2_isload;
+            pipeState_Next.ex2_isload = pipeState_Next.ex1_isload;
 
             // ROB fill slots
             pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
+            pipeState.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex3;
             pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
 
-            pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex2;
+            pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex3;
+            pipeState_Next.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex2;
             pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
+
 
             // iNSTRUCTION Valid
             pipeState.ex2_isval = pipeState_Next.ex2_isval;
+            pipeState.ex3_isval = pipeState_Next.ex3_isval;
             pipeState.wb_isval = pipeState_Next.wb_isval;
 
-            pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
+            pipeState_Next.wb_isval = pipeState_Next.ex3_isval;
+            pipeState_Next.ex3_isval = pipeState_Next.ex2_isval;
             pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
-
 
             // Pipe Diagram fill slots
             pipeState.diagram_slot_ex2 = pipeState_Next.diagram_slot_ex2;
+            pipeState.diagram_slot_ex3 = pipeState_Next.diagram_slot_ex3;
             pipeState.diagram_slot_wb = pipeState_Next.diagram_slot_wb;
 
-            pipeState_Next.diagram_slot_wb = pipeState_Next.diagram_slot_ex2;
+            pipeState_Next.diagram_slot_wb = pipeState_Next.diagram_slot_ex3;
+            pipeState_Next.diagram_slot_ex3 = pipeState_Next.diagram_slot_ex2;
             pipeState_Next.diagram_slot_ex2 = pipeState_Next.diagram_slot_ex1;
 
         } else if (pipeState.pipe_type == MULDIV_PIPE) {
@@ -645,6 +676,9 @@ void updatePipeDiagram(DiagramState &dstate, PipeState &pipeStateALU, PipeState 
         if (pipeStateMEM.ex2_isval) {
             dstate.instr[pipeStateMEM.diagram_slot_ex2].stage[cycle] = "X2-MEM";
         }
+        if (pipeStateMEM.ex3_isval) {
+            dstate.instr[pipeStateMEM.diagram_slot_ex3].stage[cycle] = "X3-MEM";
+        }
         if (pipeStateMULDIV.ex2_isval) {
             dstate.instr[pipeStateMULDIV.diagram_slot_ex2].stage[cycle] = "X2-MDV";
         }
@@ -679,6 +713,9 @@ void updatePipeDiagram(DiagramState &dstate, PipeState &pipeStateALU, PipeState 
         }        
         if (pipeStateMEM.ex2_isval) {
             dstate.instr[pipeStateMEM.diagram_slot_ex2].stage[cycle] = "X2-MEM";
+        }
+        if (pipeStateMEM.ex3_isval) {
+            dstate.instr[pipeStateMEM.diagram_slot_ex3].stage[cycle] = "X3-MEM";
         }
         if (pipeStateMEM.wb_isval) {
             dstate.instr[pipeStateMEM.diagram_slot_wb].stage[cycle] = "WB-MEM";
@@ -1109,6 +1146,8 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
         printInstr(stateMEM.ex1Instr, pipe_out);
         pipe_out << "|";
         printInstr(stateMEM.ex2Instr, pipe_out);
+        pipe_out << "|";
+        printInstr(stateMEM.ex3Instr, pipe_out);
         pipe_out << "|";
         printInstr(stateMEM.wbInstr, pipe_out);
         pipe_out << "|" << endl;

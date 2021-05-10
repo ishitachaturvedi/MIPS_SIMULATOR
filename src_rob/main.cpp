@@ -143,11 +143,6 @@ int main(int argc, char* argv[]){
 				}
 			}
 
-			// check if is_mulDiv, send down pipe3 and send noop down pipe 1 and 2
-
-			// if is_load or is_store, send down pipe2
-			// else send down pipe 1
-
 			// The instruction just executed is now sent down the pipeline. Even though it has executed it is shown to be in the "IF" stage to the user
 			// in the next cycle it will be in the ID stage, then EX and finally WB
 			// Move ALU, MEM and MULDIV one cycle forward
@@ -220,12 +215,12 @@ int main(int argc, char* argv[]){
 			// check if there needs to be a stall in the next cycle for a load RAW dependece
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
-			//dumpROBState(robState);
-			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
+			dumpROBState(robState);
+			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
 
 			if(pipeStateALU.wbPC == ADDR_NULL){
-				//std::cout << "Dumping Pipe Diagram" << endl;
-				//dumpPipeDiagram(dstate);
+				std::cout << "Dumping Pipe Diagram" << endl;
+				dumpPipeDiagram(dstate);
 			}
 			
 			CurCycle = CurCycle + 1;
