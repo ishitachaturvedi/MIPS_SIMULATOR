@@ -220,12 +220,12 @@ int main(int argc, char* argv[]){
 			// check if there needs to be a stall in the next cycle for a load RAW dependece
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
-			dumpROBState(robState);
-			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
+			//dumpROBState(robState);
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
 
 			if(pipeStateALU.wbPC == ADDR_NULL){
-				std::cout << "Dumping Pipe Diagram" << endl;
-				dumpPipeDiagram(dstate);
+				//std::cout << "Dumping Pipe Diagram" << endl;
+				//dumpPipeDiagram(dstate);
 			}
 			
 			CurCycle = CurCycle + 1;
