@@ -85,7 +85,7 @@
 85,stack,vgr16,test24.mips.bin,C test that calculates 5! recursively,128,0
 86,lwsw,vgr16,test26.mips.bin,Tests sw lw sb lb,255,0
 87,char,vgr16,test25.mips.bin,Teast loading and storting a char,72,0
-88,stress,gi316,testp.mips.bin,testing general,0,0
+88,stress,gi316,test111.mips.bin,testing general,0,0
 89,stress,gi316,hard_set.mips.bin,-,1,0
 90,calc,vgr16,test27.mips.bin,No message,203,0
 91,sort,vgr16,test28.mips.bin,Merge Sort,5,0
