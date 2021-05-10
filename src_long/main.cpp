@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
 
 		string fileName(argv[1]);
 		// store pc of the next instruction to be issued
-		int32_t tempNPC;
+		int32_t tempNPC = 1;
 		//this flag is turned on when an instruction of one of the 3 types has been executed
 		bool executed;				
 		// this data structure keeps note of the next pc and the state of the memory	
@@ -106,7 +106,8 @@ int main(int argc, char* argv[]){
 			}
 			
 			// update the pipeline diagram for the new instruction
-			updatePipeDiagram(dstate, pipeState, stalling);
+			// UNCOMMENT THIS TO PRINT PIPE DIAGRAM
+			//updatePipeDiagram(dstate, pipeState, stalling);
 
 			// if stalling was present in the last cycle, mark it as zero and check again if this cycle will need to be stalled
 			if(stalling == 1)
@@ -115,6 +116,7 @@ int main(int argc, char* argv[]){
 			}
 
 			// update the pipeline dump
+			// UNCOMMENT THIS TO PRINT PIPELINE DUMP
 			//dumpPipeState(pipeState);
 
 			// check if there needs to be a stall in the next cycle for a load RAW dependece
@@ -131,6 +133,7 @@ int main(int argc, char* argv[]){
 			// if end of program has been reached, dump the pipeline diagram
 			if(pipeState.wbPC == ADDR_NULL){
 				//std::cout << "Dumping Pipe Diagram" << endl;
+				// UNCOMMENT THIS TO PRINT PIPELINE DIAGRAM
 				//dumpPipeDiagram(dstate);
 			}
 			
