@@ -106,7 +106,8 @@ int main(int argc, char* argv[]){
 			}
 
 			// update the pipeline diagram for the new instruction
-			updatePipeDiagram(dstate, pipeState, stalling);
+			// UNCOMMENT THIS TO PRINT PIPELINE DIAGRAM
+			//updatePipeDiagram(dstate, pipeState, stalling);
 
 			// if stalling was present in the last cycle, mark it as zero and check again if this cycle will need to be stalled
 			if(stalling == 1)
@@ -117,6 +118,7 @@ int main(int argc, char* argv[]){
 			ex_isload = pipeState.ex_isload;
 			
 			//update the pipeline dump
+			// UNCOMMENT THIS TO PRINT PIPELINE DUMP
 			//dumpPipeState(pipeState);
 
 			// check if there needs to be a stall in the next cycle for a load RAW dependece
@@ -133,6 +135,7 @@ int main(int argc, char* argv[]){
 			// if end of program has been reached, dump the pipeline diagram
 			if(pipeState.wbPC == ADDR_NULL){
 				//std::cout << "Dumping Pipe Diagram" << endl;
+				// UNCOMMENT THIS TO PRINT PIPELINE DIAGRAM
 				//dumpPipeDiagram(dstate);
 			}
 			
