@@ -10,16 +10,6 @@ static void handleJInst(uint32_t instr, std::ostream & out_stream);
 
 #define NUM_REGS 32
 
-#define ALU_PIPE 1
-#define MEM_PIPE 2
-#define MULDIV_PIPE 3
-
-#define ROB_SIZE 16
-#define DIAGRAM_SIZE 50
-#define DIAGRAM_CYCLES 50
-
-#define NOP 0x00000000
-
 using namespace std;
 
 //Printing code...

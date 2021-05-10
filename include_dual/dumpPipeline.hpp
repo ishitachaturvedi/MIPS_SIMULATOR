@@ -14,10 +14,7 @@
 
 using namespace std;
 
-#define ROB_SIZE 16
-
-#define NOP 0x00000000
-
+// struct for storing current pipe state
 struct PipeState
 {
 
@@ -86,6 +83,7 @@ struct PipeState
 
 };
 
+// struct for storing next pipe state
 struct PipeState_Next
 {
 
@@ -150,6 +148,7 @@ struct PipeState_Next
     uint32_t diagram_slot_wb;
 };
 
+// struct for storing IFID pipe state
 struct PipeStateIFID
 {
     uint32_t cycle;
@@ -269,7 +268,7 @@ struct PipeStateIFID
     int stall_state_EX;
 };
 
-
+// struct for storing ROB state
 struct ROBState {
 
     uint32_t cycle;
@@ -285,6 +284,8 @@ struct ROBState {
     uint32_t commit_instrB;
 };
 
+// struct for storing an instruction with 
+// information on its stage at each clock cycle
 struct Instr {
 
     uint32_t instr;
@@ -294,6 +295,7 @@ struct Instr {
 
 };
 
+// struct for storing the state of the pipeline diagram
 struct DiagramState {
 
     uint32_t cycle;
@@ -303,23 +305,39 @@ struct DiagramState {
 
 };
 
+// function to dump the pipe state to a file named pipe_state.out
 void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState, PipeStateIFID & pipeStateIFID, int stalling);
+// function to dump the rob state to a file named rob_state.out
 void dumpROBState(ROBState & robState);
+// function to print the pipeline diagram to a file named pipe_diagram.out
 void dumpPipeDiagram(DiagramState & dstate);
+// function to check for hazards and branches
 void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool&is_RA, bool&is_IA, bool&is_JA, bool&is_RB, bool&is_IB, bool&is_JB, Decode& decodeA, Decode& decodeB, bool&is_md_non_stallA, bool&is_md_non_stallB, uint32_t instrA, uint32_t instrB);
+// wrapper function to move the entire processor forward by one cycle
 void moveOneCycle(State &mips_state, PipeStateIFID &pipeStateIFID, PipeState &pipeStateMULDIV, PipeState_Next &pipeState_NextMULDIV, PipeState &pipeStateALU, PipeState_Next &pipeState_NextALU, PipeState &pipeStateMEM, PipeState_Next &pipeState_NextMEM, DiagramState & dstate, bool executedA, bool executedB, int & CurCycle, uint32_t instrA, uint32_t instrB, int& stalling, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, uint32_t rob_tail, uint32_t diagram_slot, bool& hazard, uint32_t pc_A, uint32_t pc_B, std::vector<int32_t> regA, std::vector<int32_t> regB, bool&is_md_non_stallA, bool&is_md_non_stallB, bool &pause_for_jump_branch);
+// function to initialize the pipe states
 void initPipeline(PipeState_Next &pipeState_Next);
+// function to initialize the IFID pipe
 void initPipelineIFID(PipeStateIFID &pipeStateIFID);
+// function to initialize the rob
 void initROB(ROBState &robState);
+// function to initialize the pipeline diagram
 void initDiagram(DiagramState &dstate);
+// function to check for stall
 void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling, PipeStateIFID &pipeStateIFID);
+// function to move forward the IFID pipe by one cycle
 void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t &rob_tail, uint32_t& diagram_slot, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB, int& stalling, int CurCycle);
+// function to move forward the ALU pipe by one cycle when stalling
 void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next);
+// function to move forward the MEM pipe by one cycle when stalling
 void moveStalledMEM(PipeState &pipeState, PipeState_Next &pipeState_Next);
+// function to move forward the MULDIV pipe by one cycle when stalling
 void moveStalledMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next);
 void doROBWork(PipeStateIFID &pipeStateIFID, ROBState & robState, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV);
 void MoveOneCycleIFIDPause(PipeStateIFID &pipeStateIFID, State &mips_state);void updatePipeDiagram(DiagramState &dstate, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling);
+// function to update the pipeline diagram
 void updatePipeDiagram(DiagramState &dstate, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling, PipeStateIFID &pipeStateIFID);
+// function to print a given instruction
 void printInstr(uint32_t curInst, std::ostream & pipeState);
 
 

@@ -10,14 +10,6 @@ static void handleJInst(uint32_t instr, std::ostream & out_stream);
 
 #define NUM_REGS 32
 
-#define ALU_PIPE 1
-#define MEM_PIPE 2
-#define MULDIV_PIPE 3
-
-#define ROB_SIZE 16
-
-#define NOP 0x00000000
-#define ADDR_NULL 0x00000000
 
 using namespace std;
 
@@ -120,9 +112,6 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
     if(
         (pipeStateIFID.stall_state_EX !=1) && 
         (
-            //((idA.rs == ex1MEM.rt || idA.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr) && !(instr_DA == pipeStateMEM.ex1Instr))
-            //|| ((idB.rs == ex1MEM.rt || idB.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex2Instr) && !(instr_DA == pipeStateMEM.ex1Instr))
-
             ((idA.rs == ex1MEM.rt || idA.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex3Instr) && !(instr_DA == pipeStateMEM.ex1Instr))
             || ((idB.rs == ex1MEM.rt || idB.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex3Instr) && !(instr_DA == pipeStateMEM.ex1Instr))
             || ((idA.rs == ex2MEM.rt || idA.rd == ex2MEM.rt) && ex2MEM.rt != 0x0 && pipeStateMEM.ex2_isload && !(pipeStateMEM.ex2Instr == pipeStateMEM.ex3Instr) && !(instr_DA == pipeStateMEM.ex2Instr))
@@ -213,6 +202,7 @@ void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_m
         delay = true;
     }
 
+    // combine the hazard signals
     hazard = mem_hazard || str_hazard || delay;
 }
 
@@ -255,7 +245,6 @@ void moveOneCycleMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next, ui
     pipeState_Next.ex2reg = reg;
 
     //execute setting
-
     pipeState.ex1 = executed;
     pipeState.ex2 = pipeState_Next.ex2;
     pipeState.ex3 = pipeState_Next.ex3;
@@ -267,7 +256,7 @@ void moveOneCycleMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next, ui
     pipeState_Next.ex3 = pipeState_Next.ex2;
     pipeState_Next.ex2 = executed;
 
-    //is_mulDiv
+    //is_mulDiv flag
     pipeState.ex1_isMulDiv = is_mulDiv;
     pipeState.ex2_isMulDiv = pipeState_Next.ex2_isMulDiv;
     pipeState.ex3_isMulDiv = pipeState_Next.ex3_isMulDiv;
@@ -300,7 +289,7 @@ void moveOneCycleMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next, ui
     pipeState_Next.diagram_slot_ex2 = diagram_slot;
 
 
-    // INSTRUCTION Valid
+    // INSTRUCTION Valid flags
     pipeState.ex1_isval = valid;
     pipeState.ex2_isval = pipeState_Next.ex2_isval;
     pipeState.ex3_isval = pipeState_Next.ex3_isval;
@@ -393,7 +382,6 @@ void moveOneCycleMEM(PipeState &pipeState, PipeState_Next &pipeState_Next, uint3
     pipeState_Next.ex2reg = reg;
 
     //execute setting
-
     pipeState.ex1 = executed;
     pipeState.ex2 = pipeState_Next.ex2;
     pipeState.ex3 = pipeState_Next.ex3;
@@ -403,7 +391,7 @@ void moveOneCycleMEM(PipeState &pipeState, PipeState_Next &pipeState_Next, uint3
     pipeState_Next.ex3 = pipeState_Next.ex2;
     pipeState_Next.ex2 = executed;
 
-    //is_load
+    //is_load flags
     pipeState.ex1_isload = is_load;
     pipeState.ex2_isload = pipeState_Next.ex2_isload;
     pipeState.ex3_isload = pipeState_Next.ex3_isload;
@@ -461,16 +449,16 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
 {
 
     //pass stall stage
-    //if(stalling != 1)
-    {
-        pipeStateIFID.stall_state_EX = pipeStateIFID.stall_state_ID;
-        pipeStateIFID.stall_state_ID = pipeStateIFID.stall_state_IF;
-        pipeStateIFID.stall_state_IF = stall_state;
-    }
 
-    //pass instructions
+    pipeStateIFID.stall_state_EX = pipeStateIFID.stall_state_ID;
+    pipeStateIFID.stall_state_ID = pipeStateIFID.stall_state_IF;
+    pipeStateIFID.stall_state_IF = stall_state;
+    
+    // if the stall state is 0, and stalling signal is not 1,
+    // we issue both instructions currently in ID
     if ( pipeStateIFID.stall_state_EX == 0 && stalling != 1)
     {
+        //pass instructions
         pipeStateIFID.exInstrA = pipeStateIFID.idInstrA;
         pipeStateIFID.idInstrA = pipeStateIFID.ifInstrA;
         pipeStateIFID.ifInstrA = instrA;
@@ -500,7 +488,9 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         }
 
     }
-
+    // if the stall state is 2, and stalling signal is not 1,
+    // we issue only instruction A in from ID to X1, and keep instr B
+    // in ID, and stall the front of the pipe
     else if ( pipeStateIFID.stall_state_EX == 2 && stalling != 1)
     {
         pipeStateIFID.exInstrA = pipeStateIFID.idInstrA;
@@ -521,7 +511,8 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.ex_isvalB = false;
 
     }
-
+    // if the stall state is 1, and stalling signal is not 1,
+    // we issue only instruction B from ID to X1, and stall the front of the pipe
     else if ( pipeStateIFID.stall_state_EX == 1 && stalling != 1)
     {
         pipeStateIFID.exInstrA = NOP;
@@ -543,15 +534,13 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.ex_isvalB = true;
     }
 
-    {
-        pipeStateIFID.exPCA = pipeStateIFID.idPCA;
-        pipeStateIFID.idPCA = pipeStateIFID.ifPCA;
-        pipeStateIFID.ifPCA = pc_A;
+    pipeStateIFID.exPCA = pipeStateIFID.idPCA;
+    pipeStateIFID.idPCA = pipeStateIFID.ifPCA;
+    pipeStateIFID.ifPCA = pc_A;
 
-        pipeStateIFID.exPCB = pipeStateIFID.idPCB;
-        pipeStateIFID.idPCB = pipeStateIFID.ifPCB;
-        pipeStateIFID.ifPCB = pc_B;
-    }
+    pipeStateIFID.exPCB = pipeStateIFID.idPCB;
+    pipeStateIFID.idPCB = pipeStateIFID.ifPCB;
+    pipeStateIFID.ifPCB = pc_B;
 
     // Pass register states
     pipeStateIFID.exregA = pipeStateIFID.idregA;
@@ -562,7 +551,7 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
     pipeStateIFID.idregB = pipeStateIFID.ifregB;
     pipeStateIFID.ifregB = regB;
 
-    //pass hazard from ID to EX
+    //pass hazard from ID to EX when not stalling
     if(stalling != 1)
     {
         pipeStateIFID.is_hazard_EX = pipeStateIFID.is_hazard_ID;
@@ -588,7 +577,7 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.ex_isstoreB = pipeStateIFID.id_isstoreB;
     }
 
-    //pass hazard from IF to ID
+    //pass hazard from IF to ID when not stalling
     if(pipeStateIFID.stall_state_ID != 1 && stalling != 1)
     {
         pipeStateIFID.is_hazard_ID = pipeStateIFID.is_hazard_IF;
@@ -619,7 +608,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
     if(pipeStateIFID.stall_state_EX != 1)
     {
         //change if only when not stalling front end
-    
         pipeStateIFID.is_hazard_IF = hazard;
         pipeStateIFID.is_jumpA_IF = is_jumpA;
         pipeStateIFID.is_branchA_IF = is_branchA;
@@ -634,17 +622,11 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         pipeStateIFID.IFA = executedA;
         pipeStateIFID.IFB = executedB;
     }
-
-    // if (stalling == 1)
-    // {
-    //     pipeStateIFID.exInstrA = NOP;
-    //     pipeStateIFID.exInstrB = NOP;
-    // }
-
 }
 
 void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next)
 {
+    // pass instructions
     pipeState.wbInstr = pipeState.ex1Instr;
 
     pipeState_Next.wbInstr =  pipeState.ex1Instr;
@@ -664,6 +646,7 @@ void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next)
 
 void moveStalledMEM(PipeState &pipeState, PipeState_Next &pipeState_Next)
 {
+    // pass instructions
     pipeState.wbInstr = pipeState.ex3Instr;
     pipeState.ex3Instr = pipeState.ex2Instr;
     pipeState.ex2Instr = pipeState.ex1Instr;
@@ -1228,6 +1211,7 @@ static const string regNames[NUM_REGS] = {
     "$ra",
 };
 
+// get function name to add to pipeline diagram and pipeline dump
 static string getFunString(uint8_t funct)
 {
     switch(funct)
@@ -1289,6 +1273,7 @@ static string getFunString(uint8_t funct)
     }
 }
 
+// get imm instruction name for pipeline dump and pipeline diagram
 static string getImmString(uint8_t opcode)
 {
     switch(opcode)
@@ -1345,6 +1330,7 @@ static string getImmString(uint8_t opcode)
     }
 }
 
+// get jump instruction name for pipeline dump and pipeline diagram
 static void handleJInst(uint32_t instr, ostream & out_stream)
 {
     uint8_t opcode = (instr >> 26) & 0x3f;
@@ -1365,6 +1351,7 @@ static void handleJInst(uint32_t instr, ostream & out_stream)
     out_stream << left << setw(25) << sb.str();
 }
 
+// output imm instruction name for pipeline dump and pipeline diagram
 static void handleImmInst(uint32_t instr, ostream & out_stream)
 {
     uint8_t opcode = (instr >> 26) & 0x3f;
@@ -1440,6 +1427,7 @@ static void handleImmInst(uint32_t instr, ostream & out_stream)
     out_stream << left << setw(25) << sb.str();
 }
 
+// output reg instruction name for pipeline dump and pipeline diagram
 static void handleOpZeroInst(uint32_t instr, ostream & out_stream)
 {
     uint8_t rs = (instr >> 21) & 0x1f;
@@ -1475,6 +1463,7 @@ static void handleOpZeroInst(uint32_t instr, ostream & out_stream)
     out_stream << left << setw(25) << sb.str();
 }
 
+// function to print reg, imm, jump instructions for pipeline dump
 void printInstr(uint32_t curInst, ostream & pipeState)
 {
     if(curInst == 0xfeedfeed)
@@ -1533,6 +1522,7 @@ void printInstr(uint32_t curInst, ostream & pipeState)
     }
 }
 
+// function to output pipeline dump per cycle 
 void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & stateMULDIV, ROBState & robState, PipeStateIFID & pipeStateIFID, int stalling)
 {
 
@@ -1617,6 +1607,7 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
     }
 }
 
+// Dump ROB state per cycle 
 void dumpROBState(ROBState & robState)
 {
 
@@ -1652,6 +1643,7 @@ void dumpROBState(ROBState & robState)
     }
 }
 
+// function to print pipeline diagram per cycle
 void dumpPipeDiagram(DiagramState & dstate)
 {
 

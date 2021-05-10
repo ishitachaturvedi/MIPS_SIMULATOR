@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
 			exit(1);
 		}
 
-		// clear contents of pipedump and pipediagram
+		// clear contents of pipedump, pipediagram and robstate files
 		std::ofstream ofs;
 		ofs.open("pipe_state.out", std::ofstream::out | std::ofstream::trunc);
 		ofs.close();
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]){
 	
 		//stall for 1 extra cycle for LD stalls which are resolved in mem stage
 		// IF and ID are stalled when stalling = 1
-		int stalling = 0; //stall for 1 extra cycle for LD stalls which are resolved in mem stage
+		int stalling = 0;
 
 		//This will allocate memory for the whole RAM
 		mips_state.ram.resize(MEM_SIZE);	
@@ -144,13 +144,15 @@ int main(int argc, char* argv[]){
 			}
 
 			// The instruction just executed is now sent down the pipeline. Even though it has executed it is shown to be in the "IF" stage to the user
-			// in the next cycle it will be in the ID stage, then EX and finally WB
+			// in the next cycle it will be in the ID stage, then X1 and so on.
 			// Move ALU, MEM and MULDIV one cycle forward
 			moveOneCycle(mips_state, pipeStateALU, pipeState_NextALU, executed, CurCycle, instrALU, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
 			moveOneCycle(mips_state, pipeStateMEM, pipeState_NextMEM, executed, CurCycle, instrMEM, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
 			moveOneCycle(mips_state, pipeStateMULDIV, pipeState_NextMULDIV, executed, CurCycle, instrMULDIV, stalling, is_load, is_store, is_mulDiv, robState.tail, dstate.num_instrs);
 
 			// ROB Commit
+			// If the instructions at the head of the ROB are no longer pending, 
+			// send them to the commit and clear that slot by setting it to NOT VALID
 			if ((!robState.pending[robState.head]) && (robState.valid[robState.head])) {
 				robState.commited = true;
 				robState.commit_instr = robState.instr[robState.head];
@@ -163,6 +165,8 @@ int main(int argc, char* argv[]){
 			}
 
 			// ROB Allocate
+			// if a valid instruction has been fetched, there is no stall and there is 
+			// space in the ROB, then allocate an entry for the issued instruction
 			if (executed && (instr != NOP) && (robState.valid[robState.tail] != true)) {
 				robState.instr[robState.tail] = instr;
 				robState.valid[robState.tail] = true;
@@ -176,7 +180,7 @@ int main(int argc, char* argv[]){
 				
 			}
 
-			// ROB Fill
+			// ROB Fill - set the pending bit of the ROB entry to 0 when the instruction reaches writeback
 			if (pipeStateALU.wb_isval) {
 				robState.pending[pipeStateALU.rob_fill_slot_wb] = false;
 				//std::cout << "Cycle: " << CurCycle << " -- " << "Filling Instruction from ALU pipe: " << endl;
@@ -191,7 +195,8 @@ int main(int argc, char* argv[]){
 			}
 
 			// Pipe Diagram Allocate
-			
+			// If a valid instruction has been fetched in the IF stage and there is space in the pipe diagram, allocate a 
+			// pipe diagram entry for the instruction			
 			if (executed && (instr != NOP) && !dstate.is_full && (CurCycle < DIAGRAM_CYCLES)) {
 				dstate.instr[dstate.num_instrs].instr = instr;
 				dstate.instr[dstate.num_instrs].stage[CurCycle] = "IF\t";
