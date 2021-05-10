@@ -355,6 +355,7 @@ int main(int argc, char* argv[]){
 			}
 			
 			// update the pipe diagram structure by marking the stage that each instruction is in at the current cycle
+			// UNCOMMENT TO PRINT PIPELINE DIAGRAM
 			//updatePipeDiagram(dstate, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling, pipeStateIFID);
 			
 			// if stalling was present in the last cycle, mark it as zero and check again if this cycle will need to be stalled
@@ -366,12 +367,15 @@ int main(int argc, char* argv[]){
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling, pipeStateIFID);
 
+			//UNCOMMENT TO PRINT ROB STATE PER CYCLE
 			//dumpROBState(robState);
+			// UNCOMMENT TO PRINT PIPELINE DUMP
 			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID,stalling);	
 
 			CurCycle = CurCycle + 1;
 
 			if(pipeStateALU.wbPC == ADDR_NULL){
+				// UNCOMMENT TO PRINT PIPELINE DIAGRAM
 				//dumpPipeDiagram(dstate);
 			}
 			
