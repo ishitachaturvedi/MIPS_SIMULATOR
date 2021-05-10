@@ -78,6 +78,7 @@ enum FUN_IDS
     FUN_XOR = 0x26
 };
 
+// look for stalls between instructions at ID stage and instructions executing
 void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling, PipeStateIFID &pipeStateIFID)
 {
     // Get current instruction in decode
@@ -90,14 +91,6 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
     decode_inst(instr_DA, idA);
     decode_inst(instr_DB, idB);
 
-    // Decode Mem instructions;
-    Decode ex1MEM;
-    Decode ex2MEM;
-    Decode ex3MEM;
-    decode_inst(pipeStateMEM.ex1Instr, ex1MEM);
-    decode_inst(pipeStateMEM.ex2Instr, ex2MEM);
-    decode_inst(pipeStateMEM.ex2Instr, ex3MEM);
-
     // Decode MUL DIV instructions;
     Decode ex1MD;
     Decode ex2MD;
@@ -107,20 +100,6 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
     decode_inst(pipeStateMULDIV.ex2Instr, ex2MD);
     decode_inst(pipeStateMULDIV.ex3Instr, ex3MD);
     decode_inst(pipeStateMULDIV.ex4Instr, ex4MD);
-
-    // if ex1 are load inst which is being waited on, we stall
-    if(
-        (pipeStateIFID.stall_state_EX !=1) && 
-        (
-            ((idA.rs == ex1MEM.rt || idA.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex3Instr) && !(instr_DA == pipeStateMEM.ex1Instr))
-            || ((idB.rs == ex1MEM.rt || idB.rd == ex1MEM.rt) && ex1MEM.rt != 0x0 && pipeStateMEM.ex1_isload && !(pipeStateMEM.ex1Instr == pipeStateMEM.ex3Instr) && !(instr_DA == pipeStateMEM.ex1Instr))
-            || ((idA.rs == ex2MEM.rt || idA.rd == ex2MEM.rt) && ex2MEM.rt != 0x0 && pipeStateMEM.ex2_isload && !(pipeStateMEM.ex2Instr == pipeStateMEM.ex3Instr) && !(instr_DA == pipeStateMEM.ex2Instr))
-            || ((idB.rs == ex2MEM.rt || idB.rd == ex2MEM.rt) && ex2MEM.rt != 0x0 && pipeStateMEM.ex2_isload && !(pipeStateMEM.ex2Instr == pipeStateMEM.ex3Instr) && !(instr_DA == pipeStateMEM.ex2Instr))
-        )
-    )
-    {
-        stalling = 1;
-    }
 
     // if ex1, ex2, ex3 are mulDiv inst which is being waited on, we stall
     if(
@@ -136,6 +115,7 @@ void checkForStall(PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &
     }
 }
 
+// check for stalls between two instructions to be issued
 void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool&is_RA, bool&is_IA, bool&is_JA, bool&is_RB, bool&is_IB, bool&is_JB, Decode& decodeA, Decode& decodeB, bool&is_md_non_stallA, bool&is_md_non_stallB, uint32_t instrA, uint32_t instrB)
 {
 
@@ -206,6 +186,7 @@ void checkHazardAndBranch(bool& hazard, bool is_loadA, bool is_storeA, bool is_m
     hazard = mem_hazard || str_hazard || delay;
 }
 
+// move instruction in MULDiv pipeline one cycle forward when there is no stalling because of a data hazard between an instrcution in the ID stage with an executing instruction
 void moveOneCycleMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next, uint32_t instr, bool executed, bool is_mulDiv, uint32_t rob_tail, uint32_t diagram_slot, uint32_t PC, std::vector<int32_t> reg, bool valid)
 {
     // Instruction shifting
@@ -302,6 +283,7 @@ void moveOneCycleMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next, ui
     pipeState_Next.ex2_isval = valid;
 }
 
+// move instruction in ALU pipeline one cycle forward when there is no stalling because of a data hazard between an instrcution in the ID stage with an executing instruction
 void moveOneCycleALU(PipeState &pipeState, PipeState_Next &pipeState_Next, uint32_t instr, bool executed, uint32_t rob_tail, uint32_t diagram_slot, uint32_t PC, std::vector<int32_t> reg, bool valid)
 {
 
@@ -349,110 +331,66 @@ void moveOneCycleALU(PipeState &pipeState, PipeState_Next &pipeState_Next, uint3
     pipeState_Next.wb_isval = valid;
 }
 
+// move instruction in MEM pipeline one cycle forward when there is no stalling because of a data hazard between an instrcution in the ID stage with an executing instruction
 void moveOneCycleMEM(PipeState &pipeState, PipeState_Next &pipeState_Next, uint32_t instr, bool executed, bool is_load, uint32_t rob_tail, uint32_t diagram_slot, uint32_t PC, std::vector<int32_t> reg, bool valid)
 {
+
     // Instruction shifting
     pipeState.ex1Instr = instr;
-    pipeState.ex2Instr = pipeState_Next.ex2Instr;
-    pipeState.ex3Instr = pipeState_Next.ex3Instr;
     pipeState.wbInstr = pipeState_Next.wbInstr;
 
-    pipeState_Next.wbInstr = pipeState_Next.ex3Instr;
-    pipeState_Next.ex3Instr = pipeState_Next.ex2Instr;
-    pipeState_Next.ex2Instr = instr;
+    pipeState_Next.wbInstr = instr;
 
     //PC setting
     pipeState.ex1PC = PC;
-    pipeState.ex2PC = pipeState_Next.ex2PC;
-    pipeState.ex3PC = pipeState_Next.ex3PC;
     pipeState.wbPC = pipeState_Next.wbPC;
     
-    pipeState_Next.wbPC = pipeState_Next.ex3PC;
-    pipeState_Next.ex3PC = pipeState_Next.ex2PC;
-    pipeState_Next.ex2PC = PC;
+    pipeState_Next.wbPC = PC;
 
     //reg setting
     pipeState.ex1reg = reg;
-    pipeState.ex2reg = pipeState_Next.ex2reg;
-    pipeState.ex3reg = pipeState_Next.ex3reg;
     pipeState.wbreg = pipeState_Next.wbreg;
     
-    pipeState_Next.wbreg = pipeState_Next.ex3reg;
-    pipeState_Next.ex3reg = pipeState_Next.ex2reg;
-    pipeState_Next.ex2reg = reg;
+    pipeState_Next.wbreg = reg;
 
     //execute setting
+
     pipeState.ex1 = executed;
-    pipeState.ex2 = pipeState_Next.ex2;
-    pipeState.ex3 = pipeState_Next.ex3;
     pipeState.wb = pipeState_Next.wb;
 
-    pipeState_Next.wb = pipeState_Next.ex3;
-    pipeState_Next.ex3 = pipeState_Next.ex2;
-    pipeState_Next.ex2 = executed;
-
-    //is_load flags
-    pipeState.ex1_isload = is_load;
-    pipeState.ex2_isload = pipeState_Next.ex2_isload;
-    pipeState.ex3_isload = pipeState_Next.ex3_isload;
-    
-    pipeState_Next.ex3_isload = pipeState_Next.ex2_isload;
-    pipeState_Next.ex2_isload = is_load;
+    pipeState_Next.wb = executed;
 
     // ROB fill slots
     pipeState.rob_fill_slot_ex1 = rob_tail;
-    pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
-    pipeState.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex3;
     pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
 
-    pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex3;
-    pipeState_Next.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex2;
-    pipeState_Next.rob_fill_slot_ex2 = rob_tail;
+    pipeState_Next.rob_fill_slot_wb = rob_tail;
+
+    // Pipe Diagram slots
+    pipeState.diagram_slot_ex1 = diagram_slot;
+    pipeState.diagram_slot_wb = pipeState_Next.diagram_slot_wb;
+
+    pipeState_Next.diagram_slot_wb = diagram_slot;
 
     // iNSTRUCTION Valid
     pipeState.ex1_isval = valid;
-    pipeState.ex2_isval = pipeState_Next.ex2_isval;
-    pipeState.ex3_isval = pipeState_Next.ex3_isval;
     pipeState.wb_isval = pipeState_Next.wb_isval;
 
-    pipeState_Next.wb_isval = pipeState_Next.ex3_isval;
-    pipeState_Next.ex3_isval = pipeState_Next.ex2_isval;
-    pipeState_Next.ex2_isval = valid;
+    pipeState_Next.wb_isval = valid;
 }
 
-void MoveOneCycleIFIDPause(PipeStateIFID &pipeStateIFID, State &mips_state)
-{
-    pipeStateIFID.stall_state_IF = 0;
-    pipeStateIFID.ifInstrA = mips_state.ram[pipeStateIFID.idPCA+2];
-    pipeStateIFID.ifInstrB = mips_state.ram[pipeStateIFID.idPCB+2];
-    pipeStateIFID.ifPCA = pipeStateIFID.idPCA+2;
-    pipeStateIFID.ifPCB = pipeStateIFID.idPCB+2;
-
-    pipeStateIFID.is_hazard_IF = 0;
-    pipeStateIFID.is_jumpA_IF = 0;
-    pipeStateIFID.is_branchA_IF = 0;
-    pipeStateIFID.is_jumpB_IF = 0;
-    pipeStateIFID.is_branchB_IF = 0;
-    pipeStateIFID.if_isMulDivA = 0;
-    pipeStateIFID.if_isMulDivB = 0;
-    pipeStateIFID.if_isloadA = 0;
-    pipeStateIFID.if_isloadB = 0;
-    pipeStateIFID.if_isstoreA = 0;
-    pipeStateIFID.if_isstoreB = 0;
-    pipeStateIFID.IFA = 0;
-    pipeStateIFID.IFB = 0;
-    pipeStateIFID.if_isvalA = 0;
-    pipeStateIFID.if_isvalB = 0;
-}
-
+// Move IFID instructions one cycle forward
 void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint32_t instrA, uint32_t instrB, uint32_t pc_A, uint32_t pc_B, uint32_t &rob_tail, uint32_t diagram_slot, std::vector<int32_t> regA, std::vector<int32_t> regB, bool& hazard, bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB, int executedA, int executedB, int stall_state, bool is_valA, bool is_valB, int& stalling, int CurCycle)
 {
 
     //pass stall stage
 
-    pipeStateIFID.stall_state_EX = pipeStateIFID.stall_state_ID;
-    pipeStateIFID.stall_state_ID = pipeStateIFID.stall_state_IF;
-    pipeStateIFID.stall_state_IF = stall_state;
+    if(stalling !=1)
+    {
+        pipeStateIFID.stall_state_EX = pipeStateIFID.stall_state_ID;
+        pipeStateIFID.stall_state_ID = pipeStateIFID.stall_state_IF;
+        pipeStateIFID.stall_state_IF = stall_state;
+    }
     
     // if the stall state is 0, and stalling signal is not 1,
     // we issue both instructions currently in ID
@@ -470,7 +408,6 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
         //pass ROB tail
         pipeStateIFID.rob_fill_slot_exA = rob_tail;
 
-        uint32_t rob_tailB;
         if(rob_tail < ROB_SIZE-1)
             rob_tail = rob_tail + 1;
         else
@@ -605,7 +542,7 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
     
     }
 
-    if(pipeStateIFID.stall_state_EX != 1)
+    if(pipeStateIFID.stall_state_EX != 2 && stalling !=1)
     {
         //change if only when not stalling front end
         pipeStateIFID.is_hazard_IF = hazard;
@@ -624,6 +561,7 @@ void MoveOneCycleIFID(PipeStateIFID &pipeStateIFID, DiagramState & dstate, uint3
     }
 }
 
+// move instruction in ALU pipeline one cycle forward when there is stalling because of a data hazard between an instrcution in the ID stage with an executing instruction
 void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next)
 {
     // pass instructions
@@ -644,49 +582,28 @@ void moveStalledALU(PipeState &pipeState, PipeState_Next &pipeState_Next)
     pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
 }
 
+// move instruction in MEM pipeline one cycle forward when there no stalling because of a data hazard between an instrcution in the ID stage with an executing instruction
 void moveStalledMEM(PipeState &pipeState, PipeState_Next &pipeState_Next)
 {
     // pass instructions
-    pipeState.wbInstr = pipeState.ex3Instr;
-    pipeState.ex3Instr = pipeState.ex2Instr;
-    pipeState.ex2Instr = pipeState.ex1Instr;
+    pipeState.wbInstr = pipeState.ex1Instr;
 
-    //pipeState_Next.wbInstr =  pipeState.ex2Instr;
-
-    pipeState_Next.wbInstr =  pipeState.ex3Instr;
-    pipeState_Next.ex3Instr = pipeState.ex2Instr;
+    pipeState_Next.wbInstr =  pipeState.ex1Instr;
 
     // ROB fill slots
-    // pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
-    // pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
-
-    // pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex2;
-    // pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
-
-    pipeState.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex2;
-    pipeState.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex3;
     pipeState.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_wb;
 
-    pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex3;
-    pipeState_Next.rob_fill_slot_ex3 = pipeState_Next.rob_fill_slot_ex2;
-    pipeState_Next.rob_fill_slot_ex2 = pipeState_Next.rob_fill_slot_ex1;
+    pipeState_Next.rob_fill_slot_wb = pipeState_Next.rob_fill_slot_ex1;
 
     // iNSTRUCTION Valid
-    // pipeState.ex2_isval = pipeState_Next.ex2_isval;
-    // pipeState.wb_isval = pipeState_Next.wb_isval;
-
-    // pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
-    // pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
-
     pipeState.ex2_isval = pipeState_Next.ex2_isval;
-    pipeState.ex3_isval = pipeState_Next.ex3_isval;
     pipeState.wb_isval = pipeState_Next.wb_isval;
 
-    pipeState_Next.wb_isval = pipeState_Next.ex3_isval;
-    pipeState_Next.ex3_isval = pipeState_Next.ex2_isval;
+    pipeState_Next.wb_isval = pipeState_Next.ex2_isval;
     pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
 }
 
+// move instruction in MULDIV pipeline one cycle forward when there is stalling because of a data hazard between an instrcution in the ID stage with an executing instruction
 void moveStalledMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next)
 {
     pipeState.wbInstr = pipeState.ex4Instr;
@@ -723,6 +640,7 @@ void moveStalledMULDIV(PipeState &pipeState, PipeState_Next &pipeState_Next)
     pipeState_Next.ex2_isval = pipeState_Next.ex1_isval;
 }
 
+// MAIN FUNCTION to move the processor one cycle forward every clock cycle 
 void moveOneCycle(State &mips_state, PipeStateIFID &pipeStateIFID, PipeState &pipeStateMULDIV, PipeState_Next &pipeState_NextMULDIV, PipeState &pipeStateALU, PipeState_Next &pipeState_NextALU, PipeState &pipeStateMEM, PipeState_Next &pipeState_NextMEM, DiagramState & dstate, bool executedA, bool executedB, int &CurCycle, uint32_t instrA, uint32_t instrB, int& stalling, bool is_loadA, bool is_storeA, bool is_mulDivA, bool is_loadB, bool is_storeB, bool is_mulDivB,  bool&is_jumpA, bool&is_branchA, bool&is_jumpB, bool&is_branchB, uint32_t rob_tail, uint32_t diagram_slot, bool& hazard, uint32_t pc_A, uint32_t pc_B, std::vector<int32_t> regA, std::vector<int32_t> regB, bool&is_md_non_stallA, bool&is_md_non_stallB, bool & pause_for_jump_branch)
 {
     //ofstream piper("pipe_test.out", ios::app);
@@ -963,6 +881,7 @@ void moveOneCycle(State &mips_state, PipeStateIFID &pipeStateIFID, PipeState &pi
     }
 }
 
+// initialise the execute pipeline stages
 void initPipeline(PipeState_Next &pipeState_Next)
 {
     pipeState_Next.ex1Instr = 0x0;
@@ -991,6 +910,8 @@ void initPipeline(PipeState_Next &pipeState_Next)
 
 }
 
+
+// initialise the IF and ID pipeline stages
 void initPipelineIFID(PipeStateIFID &pipeStateIFID)
 {
     pipeStateIFID.cycle = 0;
@@ -1067,6 +988,7 @@ void initPipelineIFID(PipeStateIFID &pipeStateIFID)
 
 }
 
+// initialise the ROB
 void initROB(ROBState &robState)
 {
     robState.cycle = 0;
@@ -1085,7 +1007,7 @@ void initROB(ROBState &robState)
 
 }
 
-
+// initialise the pipeline diagram
 void initDiagram(DiagramState &dstate)
 {
     dstate.cycle = 0;
@@ -1101,6 +1023,7 @@ void initDiagram(DiagramState &dstate)
     }
 }
 
+// update the pipediagram per cycle
 void updatePipeDiagram(DiagramState &dstate, PipeState &pipeStateALU, PipeState &pipeStateMEM, PipeState &pipeStateMULDIV, int &stalling, PipeStateIFID &pipeStateIFID)
 {
     uint32_t cycle = dstate.cycle;
@@ -1563,10 +1486,10 @@ void dumpPipeState(PipeState & stateALU, PipeState & stateMEM, PipeState & state
         pipe_out << "|";
         printInstr(stateMEM.ex1Instr, pipe_out);
         pipe_out << "|";
-        printInstr(stateMEM.ex2Instr, pipe_out);
-        pipe_out << "|";
-        printInstr(stateMEM.ex3Instr, pipe_out);
-        pipe_out << "|";
+        // printInstr(stateMEM.ex2Instr, pipe_out);
+        // pipe_out << "|";
+        // printInstr(stateMEM.ex3Instr, pipe_out);
+        // pipe_out << "|";
         printInstr(stateMEM.wbInstr, pipe_out);
         pipe_out << "|" << endl;
         pipe_out << "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" << endl;

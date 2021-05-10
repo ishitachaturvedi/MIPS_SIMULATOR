@@ -355,7 +355,7 @@ int main(int argc, char* argv[]){
 			}
 			
 			// update the pipe diagram structure by marking the stage that each instruction is in at the current cycle
-			updatePipeDiagram(dstate, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling, pipeStateIFID);
+			//updatePipeDiagram(dstate, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling, pipeStateIFID);
 			
 			// if stalling was present in the last cycle, mark it as zero and check again if this cycle will need to be stalled
 			if(stalling == 1)
@@ -366,21 +366,19 @@ int main(int argc, char* argv[]){
 			// compare in all three pipestates
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling, pipeStateIFID);
 
-			dumpROBState(robState);
-			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID,stalling);	
+			//dumpROBState(robState);
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState, pipeStateIFID,stalling);	
 
 			CurCycle = CurCycle + 1;
 
 			if(pipeStateALU.wbPC == ADDR_NULL){
-				std::cout << "Dumping Pipe Diagram" << endl;
-				dumpPipeDiagram(dstate);
+				//dumpPipeDiagram(dstate);
 			}
 			
 			// check if the end of program has reached and exit the simulator
 			checkExit(pipeStateALU.wbreg, pipeStateALU.wbPC,CurCycle);
 
 			if(!pipeStateALU.wb){
-				cout << " I AM ERROR\n";
 				throw (static_cast<int>(Exception::INSTRUCTION));
 			}		
 			
@@ -392,16 +390,12 @@ int main(int argc, char* argv[]){
 		cout << "ERROR "<<CurCycle << " \n";
 		switch(EXIT_CODE){
 			case 0xFFFFFFF6:
-				cout << "ARITHMETIC\n";
 				std::exit(static_cast<int>(Exception::ARITHMETIC));
 			case 0xFFFFFFF5:
-				cout << "MEMORY\n";
 				std::exit(static_cast<int>(Exception::MEMORY));
 			case 0xFFFFFFF4:
-				cout << "INSTRUCTION\n";
 				std::exit(static_cast<int>(Exception::INSTRUCTION));
 			case 0xFFFFFFEC:
-				cout << "IO\n";
 				std::exit(static_cast<int>(Error::IO));
 			default: ;
 		}
