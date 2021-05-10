@@ -209,7 +209,8 @@ int main(int argc, char* argv[]){
 				}
 			}
 
-			updatePipeDiagram(dstate, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
+			// UNCOMMENT TO PRINT PIPELINE DIAGRAM PER CYCLE
+			//updatePipeDiagram(dstate, pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 			
 			// if stalling was present in the last cycle, mark it as zero and check again if this cycle will need to be stalled
 			if(stalling == 1)
@@ -220,12 +221,14 @@ int main(int argc, char* argv[]){
 			// check if there needs to be a stall in the next cycle for a load RAW dependece
 			checkForStall(pipeStateALU, pipeStateMEM, pipeStateMULDIV, stalling);
 
-			dumpROBState(robState);
-			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
+			// UNCOMMENT TO PRINT ROB STATE PER CYCLE
+			//dumpROBState(robState);
+			// UNCOMMENT TO PRINT PIPELINE DUMP PER CYCLE
+			//dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
 
 			if(pipeStateALU.wbPC == ADDR_NULL){
-				std::cout << "Dumping Pipe Diagram" << endl;
-				dumpPipeDiagram(dstate);
+				// UNCOMMENT TO PRINT PIPELINE DIAGRAM
+				//dumpPipeDiagram(dstate);
 			}
 			
 			CurCycle = CurCycle + 1;
