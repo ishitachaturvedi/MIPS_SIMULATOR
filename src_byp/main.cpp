@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
 
 		string fileName(argv[1]);
 		// store pc of the next instruction to be issued
-		int32_t tempNPC;
+		int32_t tempNPC = 1;
 		//this flag is turned on when an instruction of one of the 3 types has been executed
 		bool executed;	
 		// this data structure keeps note of the next pc and the state of the memory		
