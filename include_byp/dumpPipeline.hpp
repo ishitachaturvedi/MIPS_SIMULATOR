@@ -101,7 +101,7 @@ struct PipeState_Next
 struct Instr {
 
     uint32_t instr;
-    string stage[DIAGRAM_CYCLES];
+    std::string stage[DIAGRAM_CYCLES];
     bool done;
     uint32_t commit_cycle;
 

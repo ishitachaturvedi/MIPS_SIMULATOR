@@ -184,11 +184,12 @@ void moveOneCycle(State &mips_state, PipeState &pipeState, PipeState_Next &pipeS
         pipeState_Next.wbInstr =  pipeState.memInstr;
 
         // iNSTRUCTION Valid
+        pipeState.ex_isval = false;
         pipeState.mem_isval = pipeState_Next.mem_isval;
         pipeState.wb_isval = pipeState_Next.wb_isval;
 
         pipeState_Next.wb_isval = pipeState_Next.mem_isval;
-        pipeState_Next.mem_isval = pipeState_Next.ex_isval;
+        pipeState_Next.mem_isval = pipeState.ex_isval;
 
         // Pipe Diagram fill slots
         pipeState.diagram_slot_mem = pipeState_Next.diagram_slot_mem;

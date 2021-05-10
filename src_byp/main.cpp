@@ -116,7 +116,7 @@ int main(int argc, char* argv[]){
 
 			ex_isload = pipeState.ex_isload;
 			
-			// update the pipeline dump
+			//update the pipeline dump
 			//dumpPipeState(pipeState);
 
 			// check if there needs to be a stall in the next cycle for a load RAW dependece
@@ -132,7 +132,7 @@ int main(int argc, char* argv[]){
 			
 			// if end of program has been reached, dump the pipeline diagram
 			if(pipeState.wbPC == ADDR_NULL){
-				std::cout << "Dumping Pipe Diagram" << endl;
+				//std::cout << "Dumping Pipe Diagram" << endl;
 				//dumpPipeDiagram(dstate);
 			}
 			

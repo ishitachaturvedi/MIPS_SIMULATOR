@@ -115,7 +115,7 @@ int main(int argc, char* argv[]){
 			}
 
 			// update the pipeline dump
-			//dumpPipeState(pipeState);
+			dumpPipeState(pipeState);
 
 			// check if there needs to be a stall in the next cycle for a load RAW dependece
 			checkForStall(pipeState, stalling);
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]){
 			// if end of program has been reached, dump the pipeline diagram
 			if(pipeState.wbPC == ADDR_NULL){
 				std::cout << "Dumping Pipe Diagram" << endl;
-				//dumpPipeDiagram(dstate);
+				dumpPipeDiagram(dstate);
 			}
 			
 			// check if the end of program has reached and exit the simulator

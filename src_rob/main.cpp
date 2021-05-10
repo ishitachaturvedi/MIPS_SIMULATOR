@@ -223,6 +223,11 @@ int main(int argc, char* argv[]){
 			dumpROBState(robState);
 			dumpPipeState(pipeStateALU, pipeStateMEM, pipeStateMULDIV, robState);
 
+			if(pipeStateALU.wbPC == ADDR_NULL){
+				std::cout << "Dumping Pipe Diagram" << endl;
+				dumpPipeDiagram(dstate);
+			}
+			
 			CurCycle = CurCycle + 1;
 
 			// update the present pc to the NPC only if there is no stall
