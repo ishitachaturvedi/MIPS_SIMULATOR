@@ -122,7 +122,7 @@ Simulator build and execution
 
 The compiler is buildable by using the command:
 ```
-make simulator
+make 
 ```
 in the root of the respository. This results
 in a binary called `bin/mips_simulator`. An artificial requirement of
@@ -131,8 +131,18 @@ required for API reasons) is that the simulator is:
 - A binary compiled from C++ sources.
 - It can be compiled in the target Environment.
 This means that if the following sequence is executed:
+
+This generates six binaries-
+1. mips_simulator - The original MIPS simulator
+2. mips_simulator_byp - 5 stage bypass simulator
+3. mips_simulator_long - 7 stage parallel MULDIV unit simulator
+4. mips_simulator_rob - Out of order single issue simulator with 3 pipelines
+5. mips_simulator_dual - Out of order dual issue simulator with 3 pipelines
+6. testbench - The testbench binary to run benchmarks
+
+To make all the binaries again do
 ```
-rm bin/mips_simulator
+make clean
 make simulator
 ```
 Then a new binary will be compiled from C++ sources.
